@@ -1,0 +1,34 @@
+/* This module implements a boolean operator of a user-specified number of bits 
+   WIDTH is the number of bits of the output and input. Default is 16, minimum is 1
+   The boolean operator to be performed is dependent on the input select signals. The 16 possible combinations of input select signals correspond to the 16 possible 2 input boolean operators*/
+
+module boolean #(WIDTH=16:WIDTH>0) (
+    input select0, // ALUFN0 to ALUFN3
+    input select1,
+    input select2,
+    input select3,
+    input a[WIDTH],
+    input b[WIDTH],
+    output result[WIDTH]
+  ) {
+  
+  var i;
+
+  always {
+    for(i=0; i<WIDTH; i++){ // For loop that connects the ith bit of the output to a multiplexer that chooses one of the 4 select signals based on the ith bits of a and b
+      if(b[i]){
+        if(a[i]){ // 11 case
+          result[i] = select3;
+        } else { // 10 case
+          result[i] = select2;
+        }
+      } else {
+        if(a[i]){ // 01 case
+          result[i] = select1;
+        } else { // 00 case
+          result[i] = select0;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+/* This module implements a comparator for equal, less than, and less than or equal to, of two numbers of a user-specified number of bits
+   WIDTH is the number of bits of the output. Default is 16, minimum is 1
+   This comparator makes use of the results (z,v,n) from the adder circuit in the ALU*/
+
+module comparator #(WIDTH=16:WIDTH>0)(
+    input select0, // ALUFN1
+    input select1, // ALUFN2
+    input z,
+    input v,
+    input n,
+    output result[WIDTH] // Result is always same width as WIDTH, but only LSB matters. The rest are set to 0
+  ) {
+
+  always {
+    if(select1){
+      if(select0){ // 11 case. Less than or equal to
+        result[0] = z | (n^v);
+      } else { // 10 case. Less than
+        result[0] = n^v;
+      }
+    } else {
+      if(select0) { // 01 case. Equal to
+        result[0] = z;
+      } else { // 00 case. Unimplemented, so default to 0
+        result[0] = 0;
+      }
+    }
+  }
+}

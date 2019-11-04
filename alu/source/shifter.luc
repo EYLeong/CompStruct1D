@@ -1,0 +1,27 @@
+/* This module implements a bit shifter of a user-specified number of bits 
+   WIDTH is the number of bits of the output and input a. Default is 16, minimum is 1 */
+
+module shifter #(WIDTH=16:WIDTH>0)(
+    input select0, // ALUFN0
+    input select1, // ALUFN1
+    input a[WIDTH],
+    input b[$clog2(WIDTH)], // Number of bits of b to take in is determined by the ceiling of the log2 of WIDTH, as that is the minumum number of bits required to shift by WIDTH
+    output result[WIDTH]
+  ) {
+
+  always {
+    if(select1){
+      if(select0){ // 11 case. Shift right with sign extension. Necessary to force a to be signed in order for >>> and <<< to work properly.
+        result = $signed(a) >>> b;
+      } else { // 10 case. Shift left with sign extension (identical to shift left without sign extension)
+        result = $signed(a) <<< b;
+      }
+    } else {
+      if(select0) { // 01 case. Shift right
+        result = a >> b;
+      } else { // 00 case. Shift left
+        result = a << b;
+      }
+    }
+  }
+}

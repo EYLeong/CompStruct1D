@@ -1,0 +1,108 @@
+module mojo_top (
+    input clk,              // 50MHz clock
+    input rst_n,            // reset button (active low)
+    output led [8],         // 8 user controllable LEDs
+    output io_led[24],
+    input cclk,             // configuration clock, AVR ready when high
+    output spi_miso,        // AVR SPI MISO
+    input spi_ss,           // AVR SPI Slave Select
+    input spi_mosi,         // AVR SPI MOSI
+    input spi_sck,          // AVR SPI Clock
+    output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
+    input avr_tx,           // AVR TX (FPGA RX)
+    output avr_rx,          // AVR RX (FPGA TX)
+    input avr_rx_busy,       // AVR RX buffer full
+    input io_button[5]
+  ) {
+  
+  sig rst;                  // reset signal
+  sig aluResult[16]; // Intermediate signal to hold the result from the ALU
+  var currentResult; // variable to hold the current result from the ALU. Used to display the result when there is a value error, so that users can debug more easily.
+  var currentAlufn; // variable to hold the current alufn signal. Used to display the input ALUFN when there is a alufn error, so that users can debug more easily.
+  var currentCase; // variable to hold the current case being tested. Used to display the failing case when there is an error, so that users can debug more easily.
+  
+  
+  .clk(clk) {
+    // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    reset_conditioner reset_cond;
+    
+    button_conditioner button_cond; // button conditioner to prevent bouncing
+    edge_detector edge_detect(#FALL(0)); // edge detector to sync button presses with the clock. Only detect rising edges.
+    
+    .rst(edge_detect.out) { // Reset of the tester is the same as the button used to transition to the TESTING state. This is to ensure that the tester starts from the first case.
+      alutester tester(.result(aluResult)); // Use of intermediate signal because the alu has not been defined yet. But end goal is to link the output from the ALU to the .result input of the tester  
+    }
+    
+    fsm state = {WAIT, TESTING, FNERROR, VALERROR}; // No need for a reset button
+  }  
+  
+  alu alu16(#WIDTH(16), .a(tester.a), .b(tester.b), .alufn(tester.alufn)); // Link the outputs from the tester to the inputs of the ALU
+  
+  always {
+    reset_cond.in = ~rst_n; // input raw inverted reset signal
+    rst = reset_cond.out;   // conditioned reset
+    
+    button_cond.in = io_button[1]; // Center button of the IO shield, will be the button used to start/stop testing.
+    edge_detect.in = button_cond.out;
+    
+    io_led = 24b0;
+    
+    case(state.q){
+      state.WAIT:
+        io_led = 24x{1};
+        
+        if(edge_detect.out){
+         state.d = state.TESTING; 
+        }
+        
+      state.TESTING:
+        
+        aluResult = alu16.result; // link the intermediate signal to the output from the ALU
+        currentResult = alu16.result;
+        currentAlufn = tester.alufn;
+        currentCase = tester.caseNum;
+    
+        io_led[15:0] = aluResult;
+        io_led[21:16] = tester.caseNum;
+        io_led[23:22] = 2b0;
+        
+        
+        if(edge_detect.out | tester.complete){
+          state.d = state.WAIT; 
+        }
+        
+        if(alu16.err){
+          state.d = state.FNERROR; 
+        } else if(tester.err) {
+          state.d = state.VALERROR;
+        }
+        
+      state.FNERROR:
+        io_led[22] = 1;
+        io_led[23] = 0;
+        io_led[21:16] = currentCase;
+        io_led[15:6] = 0;
+        io_led[5:0] = currentAlufn; // Display the alufn that caused the error
+        
+        if(edge_detect.out){
+          state.d = state.WAIT;
+        }
+        
+      state.VALERROR:
+        io_led[23] = 1;
+        io_led[22] = 0;
+        io_led[15:0] = currentResult;
+        io_led[21:16] = currentCase;
+        
+        if(edge_detect.out){
+         state.d = state.WAIT; 
+        }
+    }
+    
+    led = 8b0; // not using default mojo LEDs
+    spi_miso = bz;          // not using SPI
+    spi_channel = bzzzz;    // not using flags
+    avr_rx = bz;            // not using serial port
+  }
+}

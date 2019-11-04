@@ -1,0 +1,50 @@
+
+
+module alutester (
+    input clk,  // clock
+    input rst,  // reset
+    input result[16],
+    output a[16],
+    output b[16],
+    output alufn[6],
+    output err,
+    output complete,
+    output caseNum[4] // Output showing what is the index of the case currently being tested. Width of this signal depends on number of cases.
+  ) {
+  
+  /* Adjust the first number after the array name according to the number of test cases. The second number follows the width of a, b, alufn etc accordingly.
+     4 arrays, each test case will add an element into each array. a, b, alufn, and ideal result. */
+  const TOTAL_CASES = 10; // Constant to hold the total number of test cases for easy module-wide change
+  sig aArray[TOTAL_CASES][16];
+  sig bArray[TOTAL_CASES][16];
+  sig fnArray[TOTAL_CASES][6];
+  sig idealArray[TOTAL_CASES][16];
+
+  /* SIZE dependent on how many bits you need to count up to the number of test cases you have. DIV = 26 for roughtly 2/3 of a second between test cases.
+     TOP (max value of counter) is the number of test cases. */
+  counter testCounter(#SIZE($clog2(TOTAL_CASES)), #DIV(26), #TOP(TOTAL_CASES), .clk(clk), .rst(rst));
+  
+  always {
+    // Initialise all test cases here. Each test case is a single column
+    aArray = {-16d13978, 16d5935, -16d10686, 16d22783, 16d25943, h8000, h9AB8, hB817, h2637, h39A7};
+    bArray = {-16d20293, 16d31823, -16d17133, 16d584, -16d26989, h0008, h000F, h000A, h0007, h0003};
+    fnArray = {b000000, b000000, b000000, b000000, b000000, b100001, b100010, b100011, b100001, b100000};
+    idealArray = {16d31265, -16d27778, -16d27819, 16d23367, -16d1046, h0080, h0000, hFFEE, h004C, hCD38};
+    
+    caseNum = testCounter.value; // index of the current case being tested as output, useful to tell which test case is failing/passing
+    
+    if(testCounter.value == TOTAL_CASES){ // when value of counter is TOTAL_CASES means all cases have been completed. Change all outputs to 0 and completed to 1.
+      a = 0;
+      b = 0;
+      alufn = 0;
+      err = 0;
+      complete = 1;
+    } else { // still testing
+      a = aArray[testCounter.value];
+      b = bArray[testCounter.value];
+      alufn = fnArray[testCounter.value];
+      complete = 0;
+      err = result != idealArray[testCounter.value]; // this signal will be 1 when the hardcoded value and the value received are different
+    }
+  }
+}
