@@ -1,3 +1,4 @@
+
 module mojo_top (
     input clk,              // 50MHz clock
     input rst_n,            // reset button (active low)
@@ -17,25 +18,32 @@ module mojo_top (
   
   sig rst;                  // reset signal
   sig aluResult[16]; // Intermediate signal to hold the result from the ALU
+  sig testSet[2]; // signal to hold the current testSet
   var currentResult; // variable to hold the current result from the ALU. Used to display the result when there is a value error, so that users can debug more easily.
   var currentAlufn; // variable to hold the current alufn signal. Used to display the input ALUFN when there is a alufn error, so that users can debug more easily.
   var currentCase; // variable to hold the current case being tested. Used to display the failing case when there is an error, so that users can debug more easily.
-  
   
   .clk(clk) {
     // The reset conditioner is used to synchronize the reset signal to the FPGA
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
     
-    button_conditioner button_cond; // button conditioner to prevent bouncing
-    edge_detector edge_detect(#FALL(0)); // edge detector to sync button presses with the clock. Only detect rising edges.
+    button_conditioner center_cond; // button conditioner to prevent bouncing
+    edge_detector center_detect(#FALL(0)); // edge detector to sync button presses with the clock. Only detect rising edges.
     
-    .rst(edge_detect.out) { // Reset of the tester is the same as the button used to transition to the TESTING state. This is to ensure that the tester starts from the first case.
-      alutester tester(.result(aluResult)); // Use of intermediate signal because the alu has not been defined yet. But end goal is to link the output from the ALU to the .result input of the tester  
+    button_conditioner left_cond;
+    edge_detector left_detect(#FALL(0));
+    
+    button_conditioner right_cond;
+    edge_detector right_detect(#FALL(0));
+    
+    .rst(center_detect.out | left_detect.out | right_detect.out) { // Reset of the tester is the same as the button used to transition to the TESTING state. This is to ensure that the tester starts from the first case.
+      alutester tester(.result(aluResult), .testSet(testSet)); // Use of intermediate signal because the alu has not been defined yet. But end goal is to link the output from the ALU to the .result input of the tester
     }
     
     fsm state = {WAIT, TESTING, FNERROR, VALERROR}; // No need for a reset button
-  }  
+    fsm testState = {PASS, FNFAIL, VALFAIL};
+  }
   
   alu alu16(#WIDTH(16), .a(tester.a), .b(tester.b), .alufn(tester.alufn)); // Link the outputs from the tester to the inputs of the ALU
   
@@ -43,8 +51,14 @@ module mojo_top (
     reset_cond.in = ~rst_n; // input raw inverted reset signal
     rst = reset_cond.out;   // conditioned reset
     
-    button_cond.in = io_button[1]; // Center button of the IO shield, will be the button used to start/stop testing.
-    edge_detect.in = button_cond.out;
+    center_cond.in = io_button[1]; // Center button of the IO shield, will be the button used to start/stop testing.
+    center_detect.in = center_cond.out;
+    
+    left_cond.in = io_button[3];
+    left_detect.in = left_cond.out;
+    
+    right_cond.in = io_button[4];
+    right_detect.in = right_cond.out;
     
     io_led = 24b0;
     
@@ -52,32 +66,50 @@ module mojo_top (
       state.WAIT:
         io_led = 24x{1};
         
-        if(edge_detect.out){
-         state.d = state.TESTING; 
+        if(center_detect.out){
+          testState.d = testState.PASS;
+          state.d = state.TESTING;
+        } else if(right_detect.out){
+          testState.d = testState.FNFAIL;
+          state.d = state.TESTING;
+        } else if(left_detect.out){
+          testState.d = testState.VALFAIL;
+          state.d = state.TESTING;
         }
-        
+      
       state.TESTING:
         
         aluResult = alu16.result; // link the intermediate signal to the output from the ALU
         currentResult = alu16.result;
         currentAlufn = tester.alufn;
         currentCase = tester.caseNum;
-    
+        
+        case(testState.q){
+          testState.PASS:
+            testSet = b00;
+          
+          testState.FNFAIL:
+            testSet = b01;
+          
+          testState.VALFAIL:
+            testSet = b10;
+        }
+        
         io_led[15:0] = aluResult;
         io_led[21:16] = tester.caseNum;
         io_led[23:22] = 2b0;
         
         
-        if(edge_detect.out | tester.complete){
-          state.d = state.WAIT; 
+        if(center_detect.out | tester.complete){
+          state.d = state.WAIT;
         }
         
         if(alu16.err){
-          state.d = state.FNERROR; 
+          state.d = state.FNERROR;
         } else if(tester.err) {
           state.d = state.VALERROR;
         }
-        
+      
       state.FNERROR:
         io_led[22] = 1;
         io_led[23] = 0;
@@ -85,18 +117,18 @@ module mojo_top (
         io_led[15:6] = 0;
         io_led[5:0] = currentAlufn; // Display the alufn that caused the error
         
-        if(edge_detect.out){
+        if(center_detect.out){
           state.d = state.WAIT;
         }
-        
+      
       state.VALERROR:
         io_led[23] = 1;
         io_led[22] = 0;
         io_led[15:0] = currentResult;
         io_led[21:16] = currentCase;
         
-        if(edge_detect.out){
-         state.d = state.WAIT; 
+        if(center_detect.out){
+          state.d = state.WAIT;
         }
     }
     

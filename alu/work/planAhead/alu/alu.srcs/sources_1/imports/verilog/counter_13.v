@@ -11,35 +11,35 @@
      TOP = TOTAL_CASES
      UP = 1
 */
-module counter_7 (
+module counter_13 (
     input clk,
     input rst,
-    output reg [3:0] value
+    output reg [4:0] value
   );
   
-  localparam SIZE = 3'h4;
+  localparam SIZE = 3'h5;
   localparam DIV = 5'h1a;
-  localparam TOP = 4'ha;
+  localparam TOP = 5'h1c;
   localparam UP = 1'h1;
   
   
-  reg [29:0] M_ctr_d, M_ctr_q = 1'h0;
+  reg [30:0] M_ctr_d, M_ctr_q = 1'h0;
   
-  localparam MAX_VALUE = 30'h2bffffff;
+  localparam MAX_VALUE = 31'h73ffffff;
   
   always @* begin
     M_ctr_d = M_ctr_q;
     
-    value = M_ctr_q[26+3-:4];
+    value = M_ctr_q[26+4-:5];
     if (1'h1) begin
       M_ctr_d = M_ctr_q + 1'h1;
-      if (1'h1 && M_ctr_q == 30'h2bffffff) begin
+      if (1'h1 && M_ctr_q == 31'h73ffffff) begin
         M_ctr_d = 1'h0;
       end
     end else begin
       M_ctr_d = M_ctr_q - 1'h1;
       if (1'h1 && M_ctr_q == 1'h0) begin
-        M_ctr_d = 30'h2bffffff;
+        M_ctr_d = 31'h73ffffff;
       end
     end
   end

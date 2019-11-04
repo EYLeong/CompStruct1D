@@ -8,7 +8,7 @@
    Parameters:
      WIDTH = WIDTH
 */
-module adder_8 (
+module adder_14 (
     input select,
     input [15:0] a,
     input [15:0] b,

@@ -46,7 +46,7 @@ module alu #(WIDTH=16:WIDTH>0)(
   comparator comp(#WIDTH(WIDTH), .z(add.z), .v(add.v), .n(add.n), .select0(alufn[1]), .select1(alufn[2]));
   shifter shift(#WIDTH(WIDTH), .select1(alufn[1]), .select0(alufn[0]), .a(a), .b(b[SHIFT_WIDTH-1:0]));
   boolean bool(#WIDTH(WIDTH), .select0(alufn[0]), .select1(alufn[1]), .select2(alufn[2]), .select3(alufn[3]), .a(a), .b(b));
-  multiplier mult(#WIDTH(WIDTH), .a(a), .b(a));
+  multiplier mult(#WIDTH(WIDTH), .a(a), .b(b));
 
   always {
     // When not doing subtraction, z v and n are set to 0

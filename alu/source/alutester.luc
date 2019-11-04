@@ -4,17 +4,18 @@ module alutester (
     input clk,  // clock
     input rst,  // reset
     input result[16],
+    input testSet[2],
     output a[16],
     output b[16],
     output alufn[6],
     output err,
     output complete,
-    output caseNum[4] // Output showing what is the index of the case currently being tested. Width of this signal depends on number of cases.
+    output caseNum[6] // Output showing what is the index of the case currently being tested. Width of this signal depends on number of cases.
   ) {
   
   /* Adjust the first number after the array name according to the number of test cases. The second number follows the width of a, b, alufn etc accordingly.
      4 arrays, each test case will add an element into each array. a, b, alufn, and ideal result. */
-  const TOTAL_CASES = 10; // Constant to hold the total number of test cases for easy module-wide change
+  const TOTAL_CASES = 28; // Constant to hold the total number of test cases for easy module-wide change
   sig aArray[TOTAL_CASES][16];
   sig bArray[TOTAL_CASES][16];
   sig fnArray[TOTAL_CASES][6];
@@ -26,11 +27,27 @@ module alutester (
   
   always {
     // Initialise all test cases here. Each test case is a single column
-    aArray = {-16d13978, 16d5935, -16d10686, 16d22783, 16d25943, h8000, h9AB8, hB817, h2637, h39A7};
-    bArray = {-16d20293, 16d31823, -16d17133, 16d584, -16d26989, h0008, h000F, h000A, h0007, h0003};
-    fnArray = {b000000, b000000, b000000, b000000, b000000, b100001, b100010, b100011, b100001, b100000};
-    idealArray = {16d31265, -16d27778, -16d27819, 16d23367, -16d1046, h0080, h0000, hFFEE, h004C, hCD38};
     
+    aArray = {hF001, h5510, h5511, h5511, hFFF0, hC000, h0030, h0055, h05C0, h00DD, h00DD, h004F, h0FFF, 16d20744, -16d26847, -16d20070, 16d6588, 16d11626, -16d13978, 16d5935, -16d10686, 16d22783, 16d25943, h8000, h9AB8, hB817, h2637, h39A7};
+    bArray = {hAA11, hFFAA, hFFFF, hAAAA, hAAAA, h0003, h0003, h0044, h05C0, h004D, h00DD, h035C, h004C, -16d16748, 16d11437, -16d7500, -16d5308, 16d6588, -16d20293, 16d31823, -16d17133, 16d584, -16d26989, h0008, h000F, h000A, h0007, h0003};
+    fnArray = {b010111, b011001, b010110, b011110, b011000, b000010, b000010, b110111, b110111, b110011, b110011, b110101, b110101, b000001, b000001, b000001, b000001, b000001, b000000, b000000, b000000, b000000, b000000, b100001, b100010, b100011, b100001, b100000};
+    idealArray = {h5FFE, h5545, hAAEE, hFFBB, hAAA0, h4000, h0090, h0000, h0001, h0000, h0001, h0001, h0000, -16d28044, 16d27252, -16d12570, 16d11896, 16d5038, 16d31265, -16d27778, -16d27819, 16d23367, -16d1046, h0080, h0000, hFFEE, h004C, hCD38};
+
+    if(testSet == 1){
+      
+        aArray = {hF001, h5510, h5511, h5511, hFFF0, hC000, h0030, h0055, h05c0, h00DD, h00DD, h004F, h0FFF, 16d20744, -16d26847, -16d20070, 16d6588, 16d11626, -16d13978, 16d5935, -16d10686, 16d22783, 16d25943, h8000, h9AB8, hB817, h2637, h39A7};
+        bArray = {hAA11, hFFAA, hFFFF, hAAAA, hAAAA, h0003, h0003, h0044, h05C0, h004D, h00DD, h035C, h004C, -16d16748, 16d11437, -16d7500, -16d5308, 16d6588, -16d20293, 16d31823, -16d17133, 16d584, -16d26989, h0008, h000F, h000A, h0007, h0003};
+        fnArray = {b010111, b011001, b010110, b011110, b011000, b000010, b000010, b110111, b110111, b110011, b110011, b110101, b110101, b000001, b000001, b000001, b000001, b000001, b000000, b000000, b000000, b000000, b000000, b100001, b111111, b100011, b100001, b100000}; // index 3 intentionally wrong
+        idealArray = {h5FFE, h5545, hAAEE, hFFBB, hAAA0, h4000, h0090, h0000, h0001, h0000, h0001, h0001, h0000, -16d28044, 16d27252, -16d12570, 16d11896, 16d5038, 16d31265, -16d27778, -16d27819, 16d23367, -16d1046, h0080, h0000, hFFEE, h004C, hCD38};
+    
+    } else if(testSet == 2){
+      
+        aArray = {hF001, h5510, h5511, h5511, hFFF0, hC000, h0030, h0055, h05c0, h00DD, h00DD, h004F, h0FFF, 16d20744, -16d26847, -16d20070, 16d6588, 16d11626, -16d13978, 16d5935, -16d10686, 16d22783, 16d25943, h8000, h9AB8, hB817, h2637, h39A7};
+        bArray = {hAA11, hFFAA, hFFFF, hAAAA, hAAAA, h0003, h0003, h0044, h05C0, h004D, h00DD, h035C, h004C, -16d16748, 16d11437, -16d7500, -16d5308, 16d6588, -16d20293, 16d31823, -16d17133, 16d584, -16d26989, h0008, h000F, h000A, h0007, h0003};
+        fnArray = {b010111, b011001, b010110, b011110, b011000, b000010, b000010, b110111, b110111, b110011, b110011, b110101, b110101, b000001, b000001, b000001, b000001, b000001, b000000, b000000, b000000, b000000, b000000, b100001, b100010, b100011, b100001, b100000};
+        idealArray = {h5FFE, h5545, hAAEE, hFFBB, hAAA0, h4000, h0090, h0000, h0001, h0000, h0001, h0001, h0000, -16d28044, 16d27252, -16d12570, 16d11896, 16d5038, 16d31265, -16d27778, -16d27819, 16d23367, -16d1046, h0080, h0000, hFFEE, h104C, hCD38}; // index 1 intentionally wrong
+    
+    }
     caseNum = testCounter.value; // index of the current case being tested as output, useful to tell which test case is failing/passing
     
     if(testCounter.value == TOTAL_CASES){ // when value of counter is TOTAL_CASES means all cases have been completed. Change all outputs to 0 and completed to 1.

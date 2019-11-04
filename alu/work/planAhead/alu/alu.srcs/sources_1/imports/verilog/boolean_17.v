@@ -8,7 +8,7 @@
    Parameters:
      WIDTH = WIDTH
 */
-module boolean_11 (
+module boolean_17 (
     input select0,
     input select1,
     input select2,

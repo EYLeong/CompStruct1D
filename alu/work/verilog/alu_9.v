@@ -8,7 +8,7 @@
    Parameters:
      WIDTH = 16
 */
-module alu_5 (
+module alu_9 (
     input [15:0] a,
     input [15:0] b,
     input [5:0] alufn,
@@ -28,7 +28,7 @@ module alu_5 (
   wire [1-1:0] M_add_z;
   wire [1-1:0] M_add_v;
   wire [1-1:0] M_add_n;
-  adder_8 add (
+  adder_14 add (
     .a(a),
     .b(b),
     .select(alufn[0+0-:1]),
@@ -39,7 +39,7 @@ module alu_5 (
   );
   
   wire [16-1:0] M_comp_result;
-  comparator_9 comp (
+  comparator_15 comp (
     .z(M_add_z),
     .v(M_add_v),
     .n(M_add_n),
@@ -49,7 +49,7 @@ module alu_5 (
   );
   
   wire [16-1:0] M_shift_result;
-  shifter_10 shift (
+  shifter_16 shift (
     .select1(alufn[1+0-:1]),
     .select0(alufn[0+0-:1]),
     .a(a),
@@ -58,7 +58,7 @@ module alu_5 (
   );
   
   wire [16-1:0] M_bool_result;
-  boolean_11 bool (
+  boolean_17 bool (
     .select0(alufn[0+0-:1]),
     .select1(alufn[1+0-:1]),
     .select2(alufn[2+0-:1]),
@@ -69,9 +69,9 @@ module alu_5 (
   );
   
   wire [16-1:0] M_mult_product;
-  multiplier_12 mult (
+  multiplier_18 mult (
     .a(a),
-    .b(a),
+    .b(b),
     .product(M_mult_product)
   );
   

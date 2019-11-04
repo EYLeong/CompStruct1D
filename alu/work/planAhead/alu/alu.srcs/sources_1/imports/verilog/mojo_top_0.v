@@ -27,6 +27,8 @@ module mojo_top_0 (
   
   reg [15:0] aluResult;
   
+  reg [1:0] testSet;
+  
   integer currentResult;
   
   integer currentAlufn;
@@ -40,30 +42,59 @@ module mojo_top_0 (
     .in(M_reset_cond_in),
     .out(M_reset_cond_out)
   );
-  wire [1-1:0] M_button_cond_out;
-  reg [1-1:0] M_button_cond_in;
-  button_conditioner_2 button_cond (
+  wire [1-1:0] M_center_cond_out;
+  reg [1-1:0] M_center_cond_in;
+  button_conditioner_2 center_cond (
     .clk(clk),
-    .in(M_button_cond_in),
-    .out(M_button_cond_out)
+    .in(M_center_cond_in),
+    .out(M_center_cond_out)
   );
-  wire [1-1:0] M_edge_detect_out;
-  reg [1-1:0] M_edge_detect_in;
-  edge_detector_3 edge_detect (
+  wire [1-1:0] M_center_detect_out;
+  reg [1-1:0] M_center_detect_in;
+  edge_detector_3 center_detect (
     .clk(clk),
-    .in(M_edge_detect_in),
-    .out(M_edge_detect_out)
+    .in(M_center_detect_in),
+    .out(M_center_detect_out)
+  );
+  wire [1-1:0] M_left_cond_out;
+  reg [1-1:0] M_left_cond_in;
+  button_conditioner_2 left_cond (
+    .clk(clk),
+    .in(M_left_cond_in),
+    .out(M_left_cond_out)
+  );
+  wire [1-1:0] M_left_detect_out;
+  reg [1-1:0] M_left_detect_in;
+  edge_detector_3 left_detect (
+    .clk(clk),
+    .in(M_left_detect_in),
+    .out(M_left_detect_out)
+  );
+  wire [1-1:0] M_right_cond_out;
+  reg [1-1:0] M_right_cond_in;
+  button_conditioner_2 right_cond (
+    .clk(clk),
+    .in(M_right_cond_in),
+    .out(M_right_cond_out)
+  );
+  wire [1-1:0] M_right_detect_out;
+  reg [1-1:0] M_right_detect_in;
+  edge_detector_3 right_detect (
+    .clk(clk),
+    .in(M_right_detect_in),
+    .out(M_right_detect_out)
   );
   wire [16-1:0] M_tester_a;
   wire [16-1:0] M_tester_b;
   wire [6-1:0] M_tester_alufn;
   wire [1-1:0] M_tester_err;
   wire [1-1:0] M_tester_complete;
-  wire [4-1:0] M_tester_caseNum;
-  alutester_4 tester (
+  wire [6-1:0] M_tester_caseNum;
+  alutester_8 tester (
     .clk(clk),
-    .rst(M_edge_detect_out),
+    .rst(M_center_detect_out | M_left_detect_out | M_right_detect_out),
     .result(aluResult),
+    .testSet(testSet),
     .a(M_tester_a),
     .b(M_tester_b),
     .alufn(M_tester_alufn),
@@ -77,13 +108,18 @@ module mojo_top_0 (
   localparam VALERROR_state = 2'd3;
   
   reg [1:0] M_state_d, M_state_q = WAIT_state;
+  localparam PASS_testState = 2'd0;
+  localparam FNFAIL_testState = 2'd1;
+  localparam VALFAIL_testState = 2'd2;
+  
+  reg [1:0] M_testState_d, M_testState_q = PASS_testState;
   
   wire [16-1:0] M_alu16_result;
   wire [1-1:0] M_alu16_z;
   wire [1-1:0] M_alu16_v;
   wire [1-1:0] M_alu16_n;
   wire [1-1:0] M_alu16_err;
-  alu_5 alu16 (
+  alu_9 alu16 (
     .a(M_tester_a),
     .b(M_tester_b),
     .alufn(M_tester_alufn),
@@ -95,19 +131,35 @@ module mojo_top_0 (
   );
   
   always @* begin
+    M_testState_d = M_testState_q;
     M_state_d = M_state_q;
     
     M_reset_cond_in = ~rst_n;
     rst = M_reset_cond_out;
-    M_button_cond_in = io_button[1+0-:1];
-    M_edge_detect_in = M_button_cond_out;
+    M_center_cond_in = io_button[1+0-:1];
+    M_center_detect_in = M_center_cond_out;
+    M_left_cond_in = io_button[3+0-:1];
+    M_left_detect_in = M_left_cond_out;
+    M_right_cond_in = io_button[4+0-:1];
+    M_right_detect_in = M_right_cond_out;
     io_led = 24'h000000;
     
     case (M_state_q)
       WAIT_state: begin
         io_led = 24'hffffff;
-        if (M_edge_detect_out) begin
+        if (M_center_detect_out) begin
+          M_testState_d = PASS_testState;
           M_state_d = TESTING_state;
+        end else begin
+          if (M_right_detect_out) begin
+            M_testState_d = FNFAIL_testState;
+            M_state_d = TESTING_state;
+          end else begin
+            if (M_left_detect_out) begin
+              M_testState_d = VALFAIL_testState;
+              M_state_d = TESTING_state;
+            end
+          end
         end
       end
       TESTING_state: begin
@@ -115,10 +167,22 @@ module mojo_top_0 (
         currentResult = M_alu16_result;
         currentAlufn = M_tester_alufn;
         currentCase = M_tester_caseNum;
+        
+        case (M_testState_q)
+          PASS_testState: begin
+            testSet = 2'h0;
+          end
+          FNFAIL_testState: begin
+            testSet = 2'h1;
+          end
+          VALFAIL_testState: begin
+            testSet = 2'h2;
+          end
+        endcase
         io_led[0+15-:16] = aluResult;
         io_led[16+5-:6] = M_tester_caseNum;
         io_led[22+1-:2] = 2'h0;
-        if (M_edge_detect_out | M_tester_complete) begin
+        if (M_center_detect_out | M_tester_complete) begin
           M_state_d = WAIT_state;
         end
         if (M_alu16_err) begin
@@ -135,7 +199,7 @@ module mojo_top_0 (
         io_led[16+5-:6] = currentCase;
         io_led[6+9-:10] = 1'h0;
         io_led[0+5-:6] = currentAlufn;
-        if (M_edge_detect_out) begin
+        if (M_center_detect_out) begin
           M_state_d = WAIT_state;
         end
       end
@@ -144,7 +208,7 @@ module mojo_top_0 (
         io_led[22+0-:1] = 1'h0;
         io_led[0+15-:16] = currentResult;
         io_led[16+5-:6] = currentCase;
-        if (M_edge_detect_out) begin
+        if (M_center_detect_out) begin
           M_state_d = WAIT_state;
         end
       end
@@ -157,6 +221,7 @@ module mojo_top_0 (
   
   always @(posedge clk) begin
     M_state_q <= M_state_d;
+    M_testState_q <= M_testState_d;
   end
   
 endmodule
