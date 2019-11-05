@@ -18,7 +18,8 @@ module mojo_top_0 (
     input avr_tx,
     output reg avr_rx,
     input avr_rx_busy,
-    input [4:0] io_button
+    input [4:0] io_button,
+    input [23:0] io_dip
   );
   
   
@@ -84,13 +85,27 @@ module mojo_top_0 (
     .in(M_right_detect_in),
     .out(M_right_detect_out)
   );
+  wire [1-1:0] M_up_cond_out;
+  reg [1-1:0] M_up_cond_in;
+  button_conditioner_2 up_cond (
+    .clk(clk),
+    .in(M_up_cond_in),
+    .out(M_up_cond_out)
+  );
+  wire [1-1:0] M_up_detect_out;
+  reg [1-1:0] M_up_detect_in;
+  edge_detector_3 up_detect (
+    .clk(clk),
+    .in(M_up_detect_in),
+    .out(M_up_detect_out)
+  );
   wire [16-1:0] M_tester_a;
   wire [16-1:0] M_tester_b;
   wire [6-1:0] M_tester_alufn;
   wire [1-1:0] M_tester_err;
   wire [1-1:0] M_tester_complete;
   wire [6-1:0] M_tester_caseNum;
-  alutester_8 tester (
+  alutester_10 tester (
     .clk(clk),
     .rst(M_center_detect_out | M_left_detect_out | M_right_detect_out),
     .result(aluResult),
@@ -102,24 +117,29 @@ module mojo_top_0 (
     .complete(M_tester_complete),
     .caseNum(M_tester_caseNum)
   );
-  localparam WAIT_state = 2'd0;
-  localparam TESTING_state = 2'd1;
-  localparam FNERROR_state = 2'd2;
-  localparam VALERROR_state = 2'd3;
+  localparam WAITA_state = 3'd0;
+  localparam WAITB_state = 3'd1;
+  localparam MRESULT_state = 3'd2;
+  localparam TESTING_state = 3'd3;
+  localparam FNERROR_state = 3'd4;
+  localparam VALERROR_state = 3'd5;
   
-  reg [1:0] M_state_d, M_state_q = WAIT_state;
+  reg [2:0] M_state_d, M_state_q = WAITA_state;
   localparam PASS_testState = 2'd0;
   localparam FNFAIL_testState = 2'd1;
   localparam VALFAIL_testState = 2'd2;
   
   reg [1:0] M_testState_d, M_testState_q = PASS_testState;
+  reg [15:0] M_manualA_d, M_manualA_q = 1'h0;
+  reg [15:0] M_manualB_d, M_manualB_q = 1'h0;
+  reg [5:0] M_manualAlufn_d, M_manualAlufn_q = 1'h0;
   
   wire [16-1:0] M_alu16_result;
   wire [1-1:0] M_alu16_z;
   wire [1-1:0] M_alu16_v;
   wire [1-1:0] M_alu16_n;
   wire [1-1:0] M_alu16_err;
-  alu_9 alu16 (
+  alu_11 alu16 (
     .a(M_tester_a),
     .b(M_tester_b),
     .alufn(M_tester_alufn),
@@ -130,9 +150,28 @@ module mojo_top_0 (
     .err(M_alu16_err)
   );
   
+  wire [16-1:0] M_malu16_result;
+  wire [1-1:0] M_malu16_z;
+  wire [1-1:0] M_malu16_v;
+  wire [1-1:0] M_malu16_n;
+  wire [1-1:0] M_malu16_err;
+  alu_11 malu16 (
+    .a(M_manualA_q),
+    .b(M_manualB_q),
+    .alufn(M_manualAlufn_q),
+    .result(M_malu16_result),
+    .z(M_malu16_z),
+    .v(M_malu16_v),
+    .n(M_malu16_n),
+    .err(M_malu16_err)
+  );
+  
   always @* begin
     M_testState_d = M_testState_q;
     M_state_d = M_state_q;
+    M_manualA_d = M_manualA_q;
+    M_manualB_d = M_manualB_q;
+    M_manualAlufn_d = M_manualAlufn_q;
     
     M_reset_cond_in = ~rst_n;
     rst = M_reset_cond_out;
@@ -142,11 +181,13 @@ module mojo_top_0 (
     M_left_detect_in = M_left_cond_out;
     M_right_cond_in = io_button[4+0-:1];
     M_right_detect_in = M_right_cond_out;
+    M_up_cond_in = io_button[0+0-:1];
+    M_up_detect_in = M_up_cond_out;
     io_led = 24'h000000;
     
     case (M_state_q)
-      WAIT_state: begin
-        io_led = 24'hffffff;
+      WAITA_state: begin
+        io_led = io_dip;
         if (M_center_detect_out) begin
           M_testState_d = PASS_testState;
           M_state_d = TESTING_state;
@@ -158,8 +199,31 @@ module mojo_top_0 (
             if (M_left_detect_out) begin
               M_testState_d = VALFAIL_testState;
               M_state_d = TESTING_state;
+            end else begin
+              if (M_up_detect_out) begin
+                M_state_d = WAITB_state;
+                M_manualA_d = io_dip[0+15-:16];
+              end
             end
           end
+        end
+      end
+      WAITB_state: begin
+        io_led = io_dip;
+        M_manualB_d = io_dip[0+15-:16];
+        M_manualAlufn_d = io_dip[16+5-:6];
+        if (M_up_detect_out) begin
+          M_state_d = MRESULT_state;
+        end
+      end
+      MRESULT_state: begin
+        io_led[16+5-:6] = M_manualAlufn_q;
+        io_led[0+15-:16] = M_malu16_result;
+        if (M_malu16_err) begin
+          io_led[23+0-:1] = 1'h1;
+        end
+        if (M_up_detect_out) begin
+          M_state_d = WAITA_state;
         end
       end
       TESTING_state: begin
@@ -181,9 +245,8 @@ module mojo_top_0 (
         endcase
         io_led[0+15-:16] = aluResult;
         io_led[16+5-:6] = M_tester_caseNum;
-        io_led[22+1-:2] = 2'h0;
         if (M_center_detect_out | M_tester_complete) begin
-          M_state_d = WAIT_state;
+          M_state_d = WAITA_state;
         end
         if (M_alu16_err) begin
           M_state_d = FNERROR_state;
@@ -195,21 +258,18 @@ module mojo_top_0 (
       end
       FNERROR_state: begin
         io_led[22+0-:1] = 1'h1;
-        io_led[23+0-:1] = 1'h0;
         io_led[16+5-:6] = currentCase;
-        io_led[6+9-:10] = 1'h0;
         io_led[0+5-:6] = currentAlufn;
         if (M_center_detect_out) begin
-          M_state_d = WAIT_state;
+          M_state_d = WAITA_state;
         end
       end
       VALERROR_state: begin
         io_led[23+0-:1] = 1'h1;
-        io_led[22+0-:1] = 1'h0;
         io_led[0+15-:16] = currentResult;
         io_led[16+5-:6] = currentCase;
         if (M_center_detect_out) begin
-          M_state_d = WAIT_state;
+          M_state_d = WAITA_state;
         end
       end
     endcase
@@ -220,6 +280,9 @@ module mojo_top_0 (
   end
   
   always @(posedge clk) begin
+    M_manualA_q <= M_manualA_d;
+    M_manualB_q <= M_manualB_d;
+    M_manualAlufn_q <= M_manualAlufn_d;
     M_state_q <= M_state_d;
     M_testState_q <= M_testState_d;
   end

@@ -11,7 +11,7 @@
      TOP = TOTAL_CASES
      UP = 1
 */
-module counter_13 (
+module counter_17 (
     input clk,
     input rst,
     output reg [4:0] value

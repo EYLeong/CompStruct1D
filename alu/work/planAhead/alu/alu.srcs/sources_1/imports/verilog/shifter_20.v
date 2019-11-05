@@ -8,7 +8,7 @@
    Parameters:
      WIDTH = WIDTH
 */
-module shifter_16 (
+module shifter_20 (
     input select0,
     input select1,
     input [15:0] a,

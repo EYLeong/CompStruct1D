@@ -8,7 +8,7 @@
    Parameters:
      WIDTH = WIDTH
 */
-module comparator_15 (
+module comparator_19 (
     input select0,
     input select1,
     input z,

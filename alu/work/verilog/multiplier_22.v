@@ -8,7 +8,7 @@
    Parameters:
      WIDTH = WIDTH
 */
-module multiplier_18 (
+module multiplier_22 (
     input [15:0] a,
     input [15:0] b,
     output reg [15:0] product

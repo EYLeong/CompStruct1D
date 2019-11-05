@@ -13,14 +13,15 @@ module mojo_top (
     input avr_tx,           // AVR TX (FPGA RX)
     output avr_rx,          // AVR RX (FPGA TX)
     input avr_rx_busy,       // AVR RX buffer full
-    input io_button[5]
+    input io_button[5],
+    input io_dip[24]
   ) {
   
   sig rst;                  // reset signal
   sig aluResult[16]; // Intermediate signal to hold the result from the ALU
   sig testSet[2]; // signal to hold the current testSet
   var currentResult; // variable to hold the current result from the ALU. Used to display the result when there is a value error, so that users can debug more easily.
-  var currentAlufn; // variable to hold the current alufn signal. Used to display the input ALUFN when there is a alufn error, so that users can debug more easily.
+  var currentAlufn; // variable to hold the current alufn signal. Used to display the input ALUFN when there is a alufn error, so that users can debug more easily. Also used for manual testing
   var currentCase; // variable to hold the current case being tested. Used to display the failing case when there is an error, so that users can debug more easily.
   
   .clk(clk) {
@@ -37,15 +38,23 @@ module mojo_top (
     button_conditioner right_cond;
     edge_detector right_detect(#FALL(0));
     
+    button_conditioner up_cond;
+    edge_detector up_detect(#FALL(0));
+    
     .rst(center_detect.out | left_detect.out | right_detect.out) { // Reset of the tester is the same as the button used to transition to the TESTING state. This is to ensure that the tester starts from the first case.
       alutester tester(.result(aluResult), .testSet(testSet)); // Use of intermediate signal because the alu has not been defined yet. But end goal is to link the output from the ALU to the .result input of the tester
     }
     
-    fsm state = {WAIT, TESTING, FNERROR, VALERROR}; // No need for a reset button
+    fsm state = {WAITA, WAITB, MRESULT, TESTING, FNERROR, VALERROR}; // No need for a reset button
     fsm testState = {PASS, FNFAIL, VALFAIL};
+    
+    dff manualA[16];
+    dff manualB[16];
+    dff manualAlufn[6];
   }
   
   alu alu16(#WIDTH(16), .a(tester.a), .b(tester.b), .alufn(tester.alufn)); // Link the outputs from the tester to the inputs of the ALU
+  alu malu16(#WIDTH(16), .a(manualA.q), .b(manualB.q), .alufn(manualAlufn.q));
   
   always {
     reset_cond.in = ~rst_n; // input raw inverted reset signal
@@ -60,11 +69,14 @@ module mojo_top (
     right_cond.in = io_button[4];
     right_detect.in = right_cond.out;
     
-    io_led = 24b0;
+    up_cond.in = io_button[0];
+    up_detect.in = up_cond.out;
+    
+    io_led = 24b0; // Default to off
     
     case(state.q){
-      state.WAIT:
-        io_led = 24x{1};
+      state.WAITA:
+        io_led = io_dip;
         
         if(center_detect.out){
           testState.d = testState.PASS;
@@ -75,8 +87,34 @@ module mojo_top (
         } else if(left_detect.out){
           testState.d = testState.VALFAIL;
           state.d = state.TESTING;
+        } else if(up_detect.out){
+          state.d = state.WAITB;
+          manualA.d = io_dip[15:0];
         }
       
+      state.WAITB:
+        io_led = io_dip;
+        
+        manualB.d = io_dip[15:0];
+        
+        manualAlufn.d = io_dip[21:16];
+        
+        if(up_detect.out){
+          state.d = state.MRESULT;
+        }
+        
+      state.MRESULT:
+        io_led[21:16] = manualAlufn.q;
+        io_led[15:0] = malu16.result;
+        
+        if(malu16.err){
+          io_led[23] = 1;
+        }
+        
+        if(up_detect.out){
+          state.d = state.WAITA;
+        }
+        
       state.TESTING:
         
         aluResult = alu16.result; // link the intermediate signal to the output from the ALU
@@ -97,11 +135,10 @@ module mojo_top (
         
         io_led[15:0] = aluResult;
         io_led[21:16] = tester.caseNum;
-        io_led[23:22] = 2b0;
         
         
         if(center_detect.out | tester.complete){
-          state.d = state.WAIT;
+          state.d = state.WAITA;
         }
         
         if(alu16.err){
@@ -112,23 +149,20 @@ module mojo_top (
       
       state.FNERROR:
         io_led[22] = 1;
-        io_led[23] = 0;
         io_led[21:16] = currentCase;
-        io_led[15:6] = 0;
         io_led[5:0] = currentAlufn; // Display the alufn that caused the error
         
         if(center_detect.out){
-          state.d = state.WAIT;
+          state.d = state.WAITA;
         }
       
       state.VALERROR:
         io_led[23] = 1;
-        io_led[22] = 0;
         io_led[15:0] = currentResult;
         io_led[21:16] = currentCase;
         
-        if(center_detect.out){
-          state.d = state.WAIT;
+        if(center_detect.out){`
+          state.d = state.WAITA;
         }
     }
     

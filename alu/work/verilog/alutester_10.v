@@ -4,7 +4,7 @@
    This is a temporary file and any changes made to it will be destroyed.
 */
 
-module alutester_8 (
+module alutester_10 (
     input clk,
     input rst,
     input [15:0] result,
@@ -30,7 +30,7 @@ module alutester_8 (
   reg [447:0] idealArray;
   
   wire [5-1:0] M_testCounter_value;
-  counter_13 testCounter (
+  counter_17 testCounter (
     .clk(clk),
     .rst(rst),
     .value(M_testCounter_value)
