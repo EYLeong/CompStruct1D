@@ -1,0 +1,46 @@
+module cpu (
+    input clk,  // clock
+    input rst,  // reset
+    output out,
+    input p1_button[4],
+    input p2_button[4]
+  ) {
+  
+  sig r0_sig;
+  sig score1_sig;
+  sig score2_sig;
+
+  .clk(clk) {
+    button_conditioner p1_b1_cond;
+    edge_detector p1_b1_detect(#FALL(0));
+    
+    button_conditioner p1_b2_cond;
+    edge_detector p1_b2_detect(#FALL(0));
+    
+    button_conditioner p1_b3_cond;
+    edge_detector p1_b3_detect(#FALL(0));
+    
+    button_conditioner p1_b4_cond;
+    edge_detector p1_b4_detect(#FALL(0));
+    
+    button_conditioner p2_b1_cond;
+    edge_detector p2_b1_detect(#FALL(0));
+    
+    button_conditioner p2_b2_cond;
+    edge_detector p2_b2_detect(#FALL(0));
+    
+    button_conditioner p2_b3_cond;
+    edge_detector p2_b3_detect(#FALL(0));
+    
+    button_conditioner p2_b4_cond;
+    edge_detector p2_b4_detect(#FALL(0));
+    
+  }
+  
+  alu alu16(#WIDTH(16), .a(tester.a), .b(tester.b), .alufn(tester.alufn));
+  
+  always {
+    
+    out = 0;
+  }
+}

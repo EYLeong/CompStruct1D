@@ -1,0 +1,33 @@
+module mux8 (
+    input lll,  // 000
+    input llh,  // 001
+    input lhl, // 010
+    input lhh, // 011
+    input hll, // 100
+    input hlh, // 101
+    input hhl, // 110
+    input hhh, // 111
+    input select[3], // mux select
+    output out
+  ) {
+
+  always {
+    if (!select[2] & !select[1] & !select[0]) {
+      out = lll;
+    } else if (!select[2] & !select[1] & select[0]) {
+      out = llh;
+    } else if (!select[2] & select[1] & !select[0]) {
+      out = lhl;
+    } else if (!select[2] & select[1] & select[0]) {
+      out = lhh;
+    } else if (select[2] & !select[1] & !select[0]) {
+      out = hll;
+    } else if (select[2] & !select[1] & select[0]) {
+      out = hlh;
+    } else if (select[2] & select[1] & !select[0]) {
+      out = hhl;
+    } else {
+      out = hhh;
+    }
+  }
+}
