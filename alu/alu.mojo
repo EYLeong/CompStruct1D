@@ -9,6 +9,7 @@
     <src>mux8.luc</src>
     <src>cpu.luc</src>
     <src>adder.luc</src>
+    <src>decoder2.luc</src>
     <src top="true">mojo_top.luc</src>
     <src>comparator.luc</src>
     <ucf>io.ucf</ucf>

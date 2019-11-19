@@ -1,14 +1,14 @@
-module mux8 (
-    input lll,  // 000
-    input llh,  // 001
-    input lhl, // 010
-    input lhh, // 011
-    input hll, // 100
-    input hlh, // 101
-    input hhl, // 110
-    input hhh, // 111
+module mux8 #(WIDTH=16:WIDTH>0) (
+    input lll[WIDTH],  // 000
+    input llh[WIDTH],  // 001
+    input lhl[WIDTH], // 010
+    input lhh[WIDTH], // 011
+    input hll[WIDTH], // 100
+    input hlh[WIDTH], // 101
+    input hhl[WIDTH], // 110
+    input hhh[WIDTH], // 111
     input select[3], // mux select
-    output out
+    output out[WIDTH]
   ) {
 
   always {
