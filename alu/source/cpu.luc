@@ -3,12 +3,9 @@ module cpu (
     input rst,  // reset
     output out,
     input p1_button[4],
-    input p2_button[4]
+    input p2_button[4],
+    input instr[17]
   ) {
-  
-  sig r0_sig;
-  sig score1_sig;
-  sig score2_sig;
 
   .clk(clk) {
     button_conditioner p1_b1_cond;
@@ -35,12 +32,58 @@ module cpu (
     button_conditioner p2_b4_cond;
     edge_detector p2_b4_detect(#FALL(0));
     
+    
   }
+ 
   
-  alu alu16(#WIDTH(16), .a(tester.a), .b(tester.b), .alufn(tester.alufn));
+  mux8 reg_mux8(#WIDTH(16),
+    .lll(r0_reg.out),
+    .llh(score1_reg.out),
+    .lhl(score2_reg.out),
+    .lhh(c{12b0, p1_button}),
+    .hll(c{12b0, p2_button}),
+    .hlh(16b0),
+    .hhl(16b0),
+    .hhh(16b0),
+    .select(instr[16:14]));
+    
+  decoder2 reg_select(#WIDTH(2),
+    .we_adr(instr[13:12]),
+    .inp(1));
+  
+  alu alu16(#WIDTH(16),
+    .a(reg_mux8.out),
+    .b(c{10b0, instr[11:6]}),
+    .alufn(instr[5:0]));
+    
+  register r0_reg(#WIDTH(16),
+    .clk(clk),
+    .rst(rst),
+    .en(reg_select.o0),
+    .data(alu16.result));
+    
+  register score1_reg(#WIDTH(16),
+    .clk(clk),
+    .rst(rst),
+    .en(reg_select.o1),
+    .data(alu16.result));
+    
+  register score2_reg(#WIDTH(16),
+    .clk(clk),
+    .rst(rst),
+    .en(reg_select.o2),
+    .data(alu16.result));
+
   
   always {
-    
-    out = 0;
+    p1_b1_cond.in = p1_button[0];
+    p1_b2_cond.in = p1_button[1];
+    p1_b3_cond.in = p1_button[2];
+    p1_b4_cond.in = p1_button[3];
+    p2_b1_cond.in = p2_button[0];
+    p2_b2_cond.in = p2_button[1];
+    p2_b3_cond.in = p2_button[2];
+    p2_b4_cond.in = p2_button[3];
+
   }
 }
