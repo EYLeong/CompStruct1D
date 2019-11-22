@@ -8,29 +8,35 @@
    Parameters:
      WIDTH = WIDTH
 */
-module shifter_26 (
+module boolean_33 (
     input select0,
     input select1,
+    input select2,
+    input select3,
     input [15:0] a,
-    input [3:0] b,
+    input [15:0] b,
     output reg [15:0] result
   );
   
   localparam WIDTH = 5'h10;
   
   
+  integer i;
+  
   always @* begin
-    if (select1) begin
-      if (select0) begin
-        result = $signed(a) >>> b;
+    for (i = 1'h0; i < 5'h10; i = i + 1) begin
+      if (b[(i)*1+0-:1]) begin
+        if (a[(i)*1+0-:1]) begin
+          result[(i)*1+0-:1] = select3;
+        end else begin
+          result[(i)*1+0-:1] = select2;
+        end
       end else begin
-        result = $signed(a) <<< b;
-      end
-    end else begin
-      if (select0) begin
-        result = a >> b;
-      end else begin
-        result = a << b;
+        if (a[(i)*1+0-:1]) begin
+          result[(i)*1+0-:1] = select1;
+        end else begin
+          result[(i)*1+0-:1] = select0;
+        end
       end
     end
   end

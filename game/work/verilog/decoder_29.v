@@ -6,18 +6,18 @@
 
 /*
    Parameters:
-     WIDTH = WIDTH
+     WIDTH = DIGIT_BITS
 */
-module multiplier_28 (
-    input [15:0] a,
-    input [15:0] b,
-    output reg [15:0] product
+module decoder_29 (
+    input [1:0] in,
+    output reg [3:0] out
   );
   
-  localparam WIDTH = 5'h10;
+  localparam WIDTH = 2'h2;
   
   
   always @* begin
-    product = a * b;
+    out = 1'h0;
+    out[(in)*1+0-:1] = 1'h1;
   end
 endmodule

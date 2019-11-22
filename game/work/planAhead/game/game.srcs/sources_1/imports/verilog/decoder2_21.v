@@ -8,7 +8,7 @@
    Parameters:
      WIDTH = 2
 */
-module decoder2_18 (
+module decoder2_21 (
     input [1:0] we_adr,
     input inp,
     output reg o0,

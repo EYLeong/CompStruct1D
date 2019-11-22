@@ -11,10 +11,13 @@ module mojo_top (
     input avr_tx,           // AVR TX (FPGA RX)
     output avr_rx,          // AVR RX (FPGA TX)
     input avr_rx_busy,       // AVR RX buffer full
+    output io_sel[4],
+    output io_seg[8],
     
+    //Debuggin/Testing
     input io_button[5],
-    output io_led[24],
-    input io_dip[24]
+    output io_led[24]
+    
   ) {
   
   sig rst;                  // reset signal
@@ -55,11 +58,18 @@ module mojo_top (
       register p2Interim(#WIDTH(1), .en(p2IEn), .data(p2IData));
       
       cpu cpu16(.instr(instruction), .p1_button(p1TestInp), .p2_button(p2TestInp)); // Replace with actual buttons
+      
+      // 7-Segment display
+      multi_seven_seg seg;
     }
     
     counter counter1(#SIZE(1), #DIV(21), .rst(dynamicRst1));
     counter counter2(#SIZE(1), #DIV(21), .rst(dynamicRst2));
   }
+  
+  // 7-Segment display
+  dig2to1 dig2to1P1;
+  dig2to1 dig2to1P2;
   
   always {
     reset_cond.in = ~rst_n; // input raw inverted reset signal
@@ -69,6 +79,14 @@ module mojo_top (
     p1ideal = c{b00, answers[cpu16.s1]};
     p2ideal = c{b00, answers[cpu16.s2]};
     
+    // 7-Segment display
+    dig2to1P1.num = cpu16.s1;
+    dig2to1P2.num = cpu16.s2;
+    seg.values = c{dig2to1P1.out, dig2to1P2.out};
+    io_seg = ~seg.seg;
+    io_sel = ~seg.sel;
+    
+    // Button conditioning
     left_cond.in = io_button[3];
     right_cond.in = io_button[4];
     up_cond.in = io_button[0];
@@ -80,15 +98,16 @@ module mojo_top (
     p1TestInp = c{b00, left_cond.out, down_cond.out};
     p2TestInp = c{b00, up_cond.out, right_cond.out};
     
+    // Testing/Debugging
     io_led = 0;
-    io_led[23:16] = cpu16.s1;
-    io_led[15:8] = cpu16.s2;
     io_led[7:4] = answers[cpu16.s1];
     io_led[3:0] = answers[cpu16.s2];
     
+    // Reset signals for each player's counters (for detecting when their score should be deducted)
     dynamicRst1 = 0;
     dynamicRst2 = 0;
     
+    // Registers to hold the player state (whether they are in interim or not)
     p1IEn = 0;
     p2IEn = 0;
     p1IData = 0;
@@ -96,6 +115,7 @@ module mojo_top (
     
     instruction = 17x{b1}; // Default instruction to idle the CPU
     
+    // Main state machine
     case(state.q){
       state.WAIT:
         io_led[23:0] = 24x{b1};
@@ -231,9 +251,11 @@ module mojo_top (
         case(player.q){
           player.P1:
             io_led[23:16] = 8x{1};
+            seg.values = {4d10,4d1,4d11,4d11}; // Hardcoded P1^^
           
           player.P2:
             io_led[7:0] = 8x{1};
+            seg.values = {4d10,4d2,4d11,4d11}; // Hardcoded P2^^
         }
       
       state.CHECKSCOREZERO:

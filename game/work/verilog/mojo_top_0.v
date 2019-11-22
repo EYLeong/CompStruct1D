@@ -17,9 +17,10 @@ module mojo_top_0 (
     input avr_tx,
     output reg avr_rx,
     input avr_rx_busy,
+    output reg [3:0] io_sel,
+    output reg [7:0] io_seg,
     input [4:0] io_button,
-    output reg [23:0] io_led,
-    input [23:0] io_dip
+    output reg [23:0] io_led
   );
   
   
@@ -150,17 +151,41 @@ module mojo_top_0 (
     .s1(M_cpu16_s1),
     .s2(M_cpu16_s2)
   );
+  wire [7-1:0] M_seg_seg;
+  wire [4-1:0] M_seg_sel;
+  reg [16-1:0] M_seg_values;
+  multi_seven_seg_11 seg (
+    .clk(clk),
+    .rst(rst),
+    .values(M_seg_values),
+    .seg(M_seg_seg),
+    .sel(M_seg_sel)
+  );
   wire [1-1:0] M_counter1_value;
-  counter_11 counter1 (
+  counter_12 counter1 (
     .clk(clk),
     .rst(dynamicRst1),
     .value(M_counter1_value)
   );
   wire [1-1:0] M_counter2_value;
-  counter_11 counter2 (
+  counter_12 counter2 (
     .clk(clk),
     .rst(dynamicRst2),
     .value(M_counter2_value)
+  );
+  
+  wire [8-1:0] M_dig2to1P1_out;
+  reg [8-1:0] M_dig2to1P1_num;
+  dig2to1_14 dig2to1P1 (
+    .num(M_dig2to1P1_num),
+    .out(M_dig2to1P1_out)
+  );
+  
+  wire [8-1:0] M_dig2to1P2_out;
+  reg [8-1:0] M_dig2to1P2_num;
+  dig2to1_14 dig2to1P2 (
+    .num(M_dig2to1P2_num),
+    .out(M_dig2to1P2_out)
   );
   
   always @* begin
@@ -172,6 +197,11 @@ module mojo_top_0 (
     answers = 64'h2313132131213213;
     p1ideal = {2'h0, answers[(M_cpu16_s1)*4+3-:4]};
     p2ideal = {2'h0, answers[(M_cpu16_s2)*4+3-:4]};
+    M_dig2to1P1_num = M_cpu16_s1;
+    M_dig2to1P2_num = M_cpu16_s2;
+    M_seg_values = {M_dig2to1P1_out, M_dig2to1P2_out};
+    io_seg = ~M_seg_seg;
+    io_sel = ~M_seg_sel;
     M_left_cond_in = io_button[3+0-:1];
     M_right_cond_in = io_button[4+0-:1];
     M_up_cond_in = io_button[0+0-:1];
@@ -181,8 +211,6 @@ module mojo_top_0 (
     p1TestInp = {2'h0, M_left_cond_out, M_down_cond_out};
     p2TestInp = {2'h0, M_up_cond_out, M_right_cond_out};
     io_led = 1'h0;
-    io_led[16+7-:8] = M_cpu16_s1;
-    io_led[8+7-:8] = M_cpu16_s2;
     io_led[4+3-:4] = answers[(M_cpu16_s1)*4+3-:4];
     io_led[0+3-:4] = answers[(M_cpu16_s2)*4+3-:4];
     dynamicRst1 = 1'h0;
@@ -345,9 +373,11 @@ module mojo_top_0 (
         case (M_player_q)
           P1_player: begin
             io_led[16+7-:8] = 8'hff;
+            M_seg_values = 16'ha1bb;
           end
           P2_player: begin
             io_led[0+7-:8] = 8'hff;
+            M_seg_values = 16'ha2bb;
           end
         endcase
       end

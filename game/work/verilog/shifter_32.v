@@ -8,12 +8,11 @@
    Parameters:
      WIDTH = WIDTH
 */
-module comparator_25 (
+module shifter_32 (
     input select0,
     input select1,
-    input z,
-    input v,
-    input n,
+    input [15:0] a,
+    input [3:0] b,
     output reg [15:0] result
   );
   
@@ -23,15 +22,15 @@ module comparator_25 (
   always @* begin
     if (select1) begin
       if (select0) begin
-        result[0+0-:1] = z | (n ^ v);
+        result = $signed(a) >>> b;
       end else begin
-        result[0+0-:1] = n ^ v;
+        result = $signed(a) <<< b;
       end
     end else begin
       if (select0) begin
-        result[0+0-:1] = z;
+        result = a >> b;
       end else begin
-        result[0+0-:1] = 1'h0;
+        result = a << b;
       end
     end
   end

@@ -8,7 +8,7 @@
    Parameters:
      WIDTH = WIDTH
 */
-module mux8_22 (
+module mux8_25 (
     input [15:0] lll,
     input [15:0] llh,
     input [15:0] lhl,
