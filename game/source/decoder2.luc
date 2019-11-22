@@ -1,0 +1,33 @@
+module decoder2 #(WIDTH=2:WIDTH>0)(
+    input we_adr[WIDTH],
+    input inp,
+    output o0,
+    output o1,
+    output o2
+  ) {
+  
+  always {
+    if(we_adr[0]==1){
+      if(we_adr[1]) { // 11 case
+        o0=0;
+        o1=0;
+        o2=0;
+      } else { // 01 case
+        o0=0;
+        o1=inp;
+        o2=0;
+      }
+    } else{
+      if(we_adr[1]){ // 10 case
+        o0=0;
+        o1=0;
+        o2=inp;
+      } else{ // 00 case
+        o0=inp;
+        o1=0;
+        o2=0;
+      }
+    }
+    
+  }
+}

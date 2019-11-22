@@ -1,0 +1,103 @@
+/* This module implements a variable bit ALU with 5 functions: addition/subtraction, boolean operations, bit shifting, comparison, and multiplication 
+   WIDTH is the number of bits in the two inputs and the output. Below is the table for valid input ALUFN signals and their corresponding operations.
+                                                                    +-----------+------------+
+                                                                    | Operation | ALUFN[5:0] |
+                                                                    +-----------+------------+
+                                                                    |    ADD    |   000000   |
+                                                                    +-----------+------------+
+                                                                    |    SUB    |   000001   |
+                                                                    +-----------+------------+
+                                                                    |    MUL    |   000010   |
+                                                                    +-----------+------------+
+                                                                    |    BOOL   |   01XXXX   | XXXX can take on any permutation for all 16 different 2 input boolean operations
+                                                                    +-----------+------------+
+                                                                    |    SHL    |   100000   |
+                                                                    +-----------+------------+
+                                                                    |    SHR    |   100001   |
+                                                                    +-----------+------------+
+                                                                    |    SRA    |   100011   |
+                                                                    +-----------+------------+
+                                                                    |    SLA    |   100010   | SLA is identical to SHL, but is included for completeness
+                                                                    +-----------+------------+
+                                                                    |   CMPEQ   |   110011   |
+                                                                    +-----------+------------+
+                                                                    |   CMPLT   |   110101   |
+                                                                    +-----------+------------+
+                                                                    |   CMPLE   |   110111   |
+                                                                    +-----------+------------+
+
+   Any ALUFN signal that is not in the table will result in all ALU outputs set to 0 and the err output set to 1
+   */
+
+module alu #(WIDTH=16:WIDTH>0)(
+    input a[WIDTH], // a and b are the two operands
+    input b[WIDTH],
+    input alufn[6], // signal to determine what operation to perform
+    output result[WIDTH],
+    output z,
+    output v,
+    output n,
+    output err // 1 when input alufn is invalid. 0 when valid.
+  ) {
+  
+  const SHIFT_WIDTH = $clog2(WIDTH); // calculate the number of bits of b to take for the shifter
+  
+  adder add(#WIDTH(WIDTH), .a(a), .b(b), .select(alufn[0]));
+  comparator comp(#WIDTH(WIDTH), .z(add.z), .v(add.v), .n(add.n), .select0(alufn[1]), .select1(alufn[2]));
+  shifter shift(#WIDTH(WIDTH), .select1(alufn[1]), .select0(alufn[0]), .a(a), .b(b[SHIFT_WIDTH-1:0]));
+  boolean bool(#WIDTH(WIDTH), .select0(alufn[0]), .select1(alufn[1]), .select2(alufn[2]), .select3(alufn[3]), .a(a), .b(b));
+  multiplier mult(#WIDTH(WIDTH), .a(a), .b(b));
+
+  always {
+    // When not doing subtraction, z v and n are set to 0
+    z = 0;
+    v = 0;
+    n = 0;
+    
+    // By default, set error indicator to 0
+    err = 0;
+    
+    if(alufn[5]){
+      if(alufn[4]){ // 11XXXX case. Comparator selected
+        if(!alufn[3] & alufn[0] & (alufn[2] | alufn[1])){ // 110XX1 case, where XX can be 11, 10, 01 for the 3 compare operators
+          result = comp.result;
+        } else { // invalid alufn
+          result = b0; 
+          err = 1;
+        }
+      } else { // 10XXXX case. Shifter selected
+        if(!alufn[3] & !alufn[2]){ // 1000XX case. XX can take on 4 diff values for the 4 different shift operations
+          result = shift.result;
+        } else { // invalid alufn
+          result = b0; 
+          err = 1;
+        }
+      }
+    } else {
+      if(alufn[4]){ // 01XXXX case. Boolean operator selected
+        result = bool.result; // all 16 permutations of 01XXXX are accepted, as there are 16 2 input operators
+      } else { // 00XXXX case.
+        if(alufn[1]){ // 00XX1X case. Multiplier selected
+          if(!alufn[3] & !alufn[2] & !alufn[0]){ // 000010 case.
+            result = mult.product;  
+          } else { // invalid alufn
+            result = b0; 
+            err = 1;
+          }
+        } else { // 00XX0X case. Adder selected
+          if(!alufn[3] & !alufn[2] & !alufn[1]){ // 00000X case
+            result = add.sum;
+            if(alufn[0]) { // 000001 case. Subtraction, so connect z v and n
+              z = add.z;
+              v = add.v;
+              n = add.n;
+            }
+          } else { // invalid alufn
+            result = b0; 
+            err = 1;
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,295 @@
+module mojo_top (
+    input clk,              // 50MHz clock
+    input rst_n,            // reset button (active low)
+    output led[8],         // 8 user controllable LEDs
+    input cclk,             // configuration clock, AVR ready when high
+    output spi_miso,        // AVR SPI MISO
+    input spi_ss,           // AVR SPI Slave Select
+    input spi_mosi,         // AVR SPI MOSI
+    input spi_sck,          // AVR SPI Clock
+    output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
+    input avr_tx,           // AVR TX (FPGA RX)
+    output avr_rx,          // AVR RX (FPGA TX)
+    input avr_rx_busy,       // AVR RX buffer full
+    
+    input io_button[5],
+    output io_led[24],
+    input io_dip[24]
+  ) {
+  
+  sig rst;                  // reset signal
+  sig answers[16][4];
+  sig instruction[17];
+  sig p1input[4];
+  sig p2input[4];
+  sig p1ideal[6];
+  sig p2ideal[6];
+  sig dynamicRst1;
+  sig dynamicRst2;
+  sig p1IEn;
+  sig p2IEn;
+  sig p1IData;
+  sig p2IData;
+  
+  // Testing / Debugging
+  sig p1TestInp[4];
+  sig p2TestInp[4];
+  
+  .clk(clk) {
+    // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    reset_conditioner reset_cond;
+    
+    button_conditioner left_cond;
+    button_conditioner right_cond;
+    button_conditioner up_cond;
+    button_conditioner down_cond;
+    button_conditioner center_cond;
+    edge_detector center_detect;
+    
+    .rst(rst){
+      fsm state = {WAIT, CHECKZERO, CHECKZEROI, CHECKANS, CHECKANSI, SCOREMINUS, SCOREPLUS, CHECKWIN, CHECKSCOREZERO, CHECKWINI, CHECKSCOREZEROI, WIN};
+      fsm player = {P1, P2};
+      
+      register p1Interim(#WIDTH(1), .en(p1IEn), .data(p1IData)); // booleans to check whether players have released their buttons after a score addition/deduction
+      register p2Interim(#WIDTH(1), .en(p2IEn), .data(p2IData));
+      
+      cpu cpu16(.instr(instruction), .p1_button(p1TestInp), .p2_button(p2TestInp)); // Replace with actual buttons
+    }
+    
+    counter counter1(#SIZE(1), #DIV(22), .rst(dynamicRst1));
+    counter counter2(#SIZE(1), #DIV(22), .rst(dynamicRst2));
+  }
+  
+  always {
+    reset_cond.in = ~rst_n; // input raw inverted reset signal
+    rst = reset_cond.out;   // conditioned reset
+    
+    answers = {b0010, b0011, b0001, b0011, b0001, b0011, b0010, b0001, b0011, b0001, b0010, b0001, b0011, b0010, b0001, b0011};
+    p1ideal = c{b00, answers[cpu16.s1]};
+    p2ideal = c{b00, answers[cpu16.s2]};
+    
+    left_cond.in = io_button[3];
+    right_cond.in = io_button[4];
+    up_cond.in = io_button[0];
+    down_cond.in = io_button[2];
+    center_cond.in = io_button[1];
+    center_detect.in = center_cond.out;
+    
+    // Testing/Debugging
+    p1TestInp = c{b00, left_cond.out, down_cond.out};
+    p2TestInp = c{b00, up_cond.out, right_cond.out};
+    
+    io_led = 0;
+    io_led[23:16] = cpu16.s1;
+    io_led[15:8] = cpu16.s2;
+    io_led[7:4] = answers[cpu16.s1];
+    io_led[3:0] = answers[cpu16.s2];
+    
+    dynamicRst1 = 0;
+    dynamicRst2 = 0;
+    
+    p1IEn = 0;
+    p2IEn = 0;
+    p1IData = 0;
+    p2IData = 0;
+    
+    instruction = 17x{b1}; // Default instruction to idle the CPU
+    
+    case(state.q){
+      state.WAIT:
+        io_led[23:0] = 24x{b1};
+        if(center_detect.out){
+          state.d = state.CHECKZERO;
+        }
+      
+      state.CHECKZERO:
+        case(player.q){
+          player.P1:
+            instruction = c{b011, 8b0, b110011};
+          player.P2:
+            instruction = c{b100, 8b0, b110011};
+        }
+        state.d = state.CHECKZEROI;
+      
+      state.CHECKZEROI:
+        case(player.q){
+          player.P1:
+            if(cpu16.out){
+              p1IEn = 1;
+              p1IData = 0; // take player out of interim
+              dynamicRst1 = 1; // reset p1 counter
+              player.d = player.P2;
+              state.d = state.CHECKZERO;
+            } else {
+              if(p1Interim.out){ // If in interim, do nothing and move on to other player.
+                state.d = state.CHECKZERO;
+                player.d = player.P2;
+              } else {
+                state.d = state.CHECKANS;
+              }
+            }
+          
+          player.P2:
+            if(cpu16.out){
+              p2IEn = 1;
+              p2IData = 0;
+              dynamicRst2 = 1;
+              player.d = player.P1;
+              state.d = state.CHECKZERO;
+            } else {
+              if(p2Interim.out){
+                state.d = state.CHECKZERO;
+                player.d = player.P1;
+              } else {
+                state.d = state.CHECKANS;
+              }
+            }
+        }
+      
+      state.CHECKANS:
+        case(player.q){
+          player.P1:
+            instruction = c{b011, b00, p1ideal, b110011};
+          player.P2:
+            instruction = c{b100, b00, p2ideal, b110011};
+        }
+        state.d = state.CHECKANSI;
+      
+      state.CHECKANSI:
+        case(player.q){
+          player.P1:
+            if(cpu16.out){
+              state.d = state.SCOREPLUS;
+            } else {
+              if(counter1.value){
+                state.d = state.CHECKSCOREZERO;
+              } else {
+                player.d = player.P2;
+                state.d = state.CHECKZERO;
+              }
+            }
+          
+          player.P2:
+            if(cpu16.out){
+              state.d = state.SCOREPLUS;
+            } else {
+              if(counter2.value){
+                state.d = state.CHECKSCOREZERO;
+              } else {
+                player.d = player.P1;
+                state.d = state.CHECKZERO;
+              }
+            }
+        }
+      
+      state.SCOREPLUS:
+        case(player.q){
+          player.P1:
+            instruction = c{b001, b01, b000001, 6x{b0}};
+            p1IEn = 1;
+            p1IData = 1; // put player into interim after successful addition of score.
+            state.d = state.CHECKWIN;
+          
+          player.P2:
+            instruction = c{b010, b10, b000001, 6x{b0}};
+            p2IEn = 1;
+            p2IData = 1;
+            state.d = state.CHECKWIN;
+        }
+      
+      state.CHECKWIN:
+        case(player.q){
+          player.P1:
+            instruction = c{b001, b00, b010000, b110011};
+          
+          player.P2:
+            instruction = c{b010, b00, b010000, b110011};
+        }
+        state.d = state.CHECKWINI;
+      
+      state.CHECKWINI:
+        case(player.q){
+          player.P1:
+            if(cpu16.out){
+              state.d = state.WIN;
+            } else {
+              player.d = player.P2;
+              state.d = state.CHECKZERO;
+            }
+          
+          player.P2:
+            if(cpu16.out){
+              state.d = state.WIN;
+            } else {
+              player.d = player.P1;
+              state.d = state.CHECKZERO;
+            }
+        }
+      
+      state.WIN:
+        case(player.q){
+          player.P1:
+            io_led[23:16] = 8x{1};
+          
+          player.P2:
+            io_led[7:0] = 8x{1};
+        }
+      
+      state.CHECKSCOREZERO:
+        case(player.q){
+          player.P1:
+            instruction = c{b001, b00, b000000, b110011};
+            state.d = state.CHECKSCOREZEROI;
+          
+          player.P2:
+            instruction = c{b010, b00, b000000, b110011};
+            state.d = state.CHECKSCOREZEROI;
+        }
+      
+      state.CHECKSCOREZEROI:
+        case(player.q){
+          player.P1:
+            if(cpu16.out){
+              player.d = player.P2;
+              state.d = state.CHECKZERO;
+            } else {
+              state.d = state.SCOREMINUS;
+            }
+          
+          player.P2:
+            if(cpu16.out){
+              player.d = player.P1;
+              state.d = state.CHECKZERO;
+            } else {
+              state.d = state.SCOREMINUS;
+            }
+        }
+      
+      state.SCOREMINUS:
+        case(player.q){
+          player.P1:
+            instruction = c{b001, b01, b000001, b000001};
+            p1IEn = 1;
+            p1IData = 1; // put player into interim after deduction of score.
+            state.d = state.CHECKZERO;
+            player.d = player.P2;
+          
+          player.P2:
+            instruction = c{b010, b10, b000001, b000001};
+            p2IEn = 1;
+            p2IData = 1;
+            state.d = state.CHECKZERO;
+            player.d = player.P1;
+        }
+      
+    }
+    
+    // Testing/Debugging
+    led = c{counter1.value, counter2.value, p1Interim.out, p2Interim.out};
+    
+    spi_miso = bz;          // not using SPI
+    spi_channel = bzzzz;    // not using flags
+    avr_rx = bz;            // not using serial port
+  }
+}

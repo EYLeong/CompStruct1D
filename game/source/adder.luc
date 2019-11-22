@@ -1,0 +1,40 @@
+/* This module implements an adder of a user-specified number of bits 
+   WIDTH is the number of bits of the adder. Default is 16, minimum is 1
+   If there is overflow, only the least significant WIDTH number of bits are kept, but the output v will be 1*/
+
+module adder #(WIDTH=16:WIDTH>0)(
+    input select, // ALUFN0. 1 for subtraction, 0 for addition
+    input a[WIDTH],
+    input b[WIDTH],
+    output sum[WIDTH],
+    output z, 
+    output v,
+    output n
+  ) {
+  
+  sig sumI[WIDTH]; // Internal signal for sum to allow reading of sum value
+  sig xb[WIDTH]; // Signal to hold xb (b when doing addition, -b when doing subtraction)
+
+  always {
+    
+    if(select){ // select is 1 when doing subtraction
+      xb = -b; // negative of b to prepare the subtraction
+    } else {
+      xb = b; // No change made to b
+    }
+    
+    sumI = a+xb; // Simple addition is fine, because negative of b is taken as xb if doing subtraction.
+    
+    v = (a[WIDTH-1]&xb[WIDTH-1]&~sumI[WIDTH-1])|(~a[WIDTH-1]&~xb[WIDTH-1]&sumI[WIDTH-1]); // Boolean logic for calculating overflow
+
+    if(sumI==WIDTHx{0}){ // if the sum is all 0 means both numbers are equal (assuming subtraction)
+      z=1;
+    } else {
+      z=0;
+    }
+    
+    n = sumI[WIDTH-1]; // if MSB of sum is 1, means output is negative (two's complement)
+    
+    sum = sumI;
+  }
+}

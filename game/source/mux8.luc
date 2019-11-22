@@ -1,0 +1,33 @@
+module mux8 #(WIDTH=16:WIDTH>0) (
+    input lll[WIDTH],  // 000
+    input llh[WIDTH],  // 001
+    input lhl[WIDTH], // 010
+    input lhh[WIDTH], // 011
+    input hll[WIDTH], // 100
+    input hlh[WIDTH], // 101
+    input hhl[WIDTH], // 110
+    input hhh[WIDTH], // 111
+    input select[3], // mux select
+    output out[WIDTH]
+  ) {
+
+  always {
+    if (!select[2] & !select[1] & !select[0]) {
+      out = lll;
+    } else if (!select[2] & !select[1] & select[0]) {
+      out = llh;
+    } else if (!select[2] & select[1] & !select[0]) {
+      out = lhl;
+    } else if (!select[2] & select[1] & select[0]) {
+      out = lhh;
+    } else if (select[2] & !select[1] & !select[0]) {
+      out = hll;
+    } else if (select[2] & !select[1] & select[0]) {
+      out = hlh;
+    } else if (select[2] & select[1] & !select[0]) {
+      out = hhl;
+    } else {
+      out = hhh;
+    }
+  }
+}

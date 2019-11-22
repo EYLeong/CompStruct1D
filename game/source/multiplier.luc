@@ -1,0 +1,13 @@
+/* This module implements a multiplier of a user-specified number of bits 
+   WIDTH is the number of bits of the output and input. Default is 16, minimum is 1 */
+
+module multiplier #(WIDTH=16:WIDTH>0) (
+    input a[WIDTH],
+    input b[WIDTH],
+    output product[WIDTH]
+  ) {
+
+  always {
+    product = a*b;
+  }
+}
