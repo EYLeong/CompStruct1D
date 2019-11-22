@@ -57,8 +57,8 @@ module mojo_top (
       cpu cpu16(.instr(instruction), .p1_button(p1TestInp), .p2_button(p2TestInp)); // Replace with actual buttons
     }
     
-    counter counter1(#SIZE(1), #DIV(22), .rst(dynamicRst1));
-    counter counter2(#SIZE(1), #DIV(22), .rst(dynamicRst2));
+    counter counter1(#SIZE(1), #DIV(21), .rst(dynamicRst1));
+    counter counter2(#SIZE(1), #DIV(21), .rst(dynamicRst2));
   }
   
   always {
