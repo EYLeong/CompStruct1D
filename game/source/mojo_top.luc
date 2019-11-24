@@ -14,22 +14,22 @@ module mojo_top (
     output io_sel[4],
     output io_seg[8],
     
-    //Debuggin/Testing
+    //Debugging/Testing
     input io_button[5],
     output io_led[24]
     
   ) {
   
   sig rst;                  // reset signal
-  sig answers[16][4];
-  sig instruction[17];
-  sig p1input[4];
+  sig answers[16][4]; // Sequences that the players are supposed to press
+  sig instruction[17]; // 17bit instruction to cpu
+  sig p1input[4]; // 4bit button inputs that have been conditioned
   sig p2input[4];
-  sig p1ideal[6];
+  sig p1ideal[6]; // current sequence that each player is supposed to press
   sig p2ideal[6];
-  sig dynamicRst1;
+  sig dynamicRst1; // Dynamic reset signals for player score deduction counters
   sig dynamicRst2;
-  sig p1IEn;
+  sig p1IEn; // Enable and data signals for registers that hold the player state (interim or not)
   sig p2IEn;
   sig p1IData;
   sig p2IData;
@@ -43,28 +43,33 @@ module mojo_top (
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
     
+    // button conditioning
     button_conditioner left_cond;
     button_conditioner right_cond;
     button_conditioner up_cond;
     button_conditioner down_cond;
     button_conditioner center_cond;
-    edge_detector center_detect;
+    edge_detector center_detect(#FALL(0));
+    
+    counter counter1(#SIZE(1), #DIV(21), .rst(dynamicRst1));
+    counter counter2(#SIZE(1), #DIV(21), .rst(dynamicRst2));
     
     .rst(rst){
+      // Main state machine
       fsm state = {WAIT, CHECKZERO, CHECKZEROI, CHECKANS, CHECKANSI, SCOREMINUS, SCOREPLUS, CHECKWIN, CHECKSCOREZERO, CHECKWINI, CHECKSCOREZEROI, WIN};
-      fsm player = {P1, P2};
+      fsm player = {P1, P2}; // State to check who's turn it is
       
       register p1Interim(#WIDTH(1), .en(p1IEn), .data(p1IData)); // booleans to check whether players have released their buttons after a score addition/deduction
       register p2Interim(#WIDTH(1), .en(p2IEn), .data(p2IData));
       
-      cpu cpu16(.instr(instruction), .p1_button(p1TestInp), .p2_button(p2TestInp)); // Replace with actual buttons
+      cpu cpu16(.instr(instruction), .p1_button(p1TestInp), .p2_button(p2TestInp)); // CPU for computation
       
       // 7-Segment display
       multi_seven_seg seg;
+      
+      // random generator
+      randomSet random;
     }
-    
-    counter counter1(#SIZE(1), #DIV(21), .rst(dynamicRst1));
-    counter counter2(#SIZE(1), #DIV(21), .rst(dynamicRst2));
   }
   
   // 7-Segment display
@@ -100,6 +105,7 @@ module mojo_top (
     
     // Testing/Debugging
     io_led = 0;
+    io_led[15:8] = c{random.out[cpu16.s1], random.out[cpu16.s2]};
     io_led[7:4] = answers[cpu16.s1];
     io_led[3:0] = answers[cpu16.s2];
     
@@ -115,9 +121,12 @@ module mojo_top (
     
     instruction = 17x{b1}; // Default instruction to idle the CPU
     
+    random.next = 0; // By default do not generate new numbers
+    
     // Main state machine
     case(state.q){
       state.WAIT:
+        random.next = 1; // Generate new numbers in the WAIT State continuously
         io_led[23:0] = 24x{b1};
         if(center_detect.out){
           state.d = state.CHECKZERO;
@@ -250,11 +259,9 @@ module mojo_top (
       state.WIN:
         case(player.q){
           player.P1:
-            io_led[23:16] = 8x{1};
             seg.values = {4d10,4d1,4d11,4d11}; // Hardcoded P1^^
           
           player.P2:
-            io_led[7:0] = 8x{1};
             seg.values = {4d10,4d2,4d11,4d11}; // Hardcoded P2^^
         }
       
@@ -304,9 +311,7 @@ module mojo_top (
             state.d = state.CHECKZERO;
             player.d = player.P1;
         }
-      
     }
-    
     // Testing/Debugging
     led = c{counter1.value, counter2.value, p1Interim.out, p2Interim.out};
     

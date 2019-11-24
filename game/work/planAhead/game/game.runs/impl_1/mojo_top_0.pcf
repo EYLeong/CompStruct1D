@@ -1,5 +1,5 @@
 //! **************************************************************************
-// Written by: Map P.20131013 on Fri Nov 22 12:25:24 2019
+// Written by: Map P.20131013 on Sun Nov 24 02:51:14 2019
 //! **************************************************************************
 
 SCHEMATIC START;
@@ -48,14 +48,14 @@ COMP "avr_tx" LOCATE = SITE "P55" LEVEL 1;
 COMP "spi_ss" LOCATE = SITE "P48" LEVEL 1;
 COMP "io_led[10]" LOCATE = SITE "P82" LEVEL 1;
 COMP "io_led[11]" LOCATE = SITE "P83" LEVEL 1;
-COMP "io_led[12]" LOCATE = SITE "P80" LEVEL 1;
 COMP "io_led[20]" LOCATE = SITE "P22" LEVEL 1;
-COMP "io_led[13]" LOCATE = SITE "P81" LEVEL 1;
+COMP "io_led[12]" LOCATE = SITE "P80" LEVEL 1;
 COMP "io_led[21]" LOCATE = SITE "P23" LEVEL 1;
-COMP "io_led[14]" LOCATE = SITE "P11" LEVEL 1;
+COMP "io_led[13]" LOCATE = SITE "P81" LEVEL 1;
 COMP "io_led[22]" LOCATE = SITE "P24" LEVEL 1;
-COMP "io_led[15]" LOCATE = SITE "P14" LEVEL 1;
+COMP "io_led[14]" LOCATE = SITE "P11" LEVEL 1;
 COMP "io_led[23]" LOCATE = SITE "P26" LEVEL 1;
+COMP "io_led[15]" LOCATE = SITE "P14" LEVEL 1;
 COMP "io_led[16]" LOCATE = SITE "P15" LEVEL 1;
 COMP "io_led[17]" LOCATE = SITE "P16" LEVEL 1;
 COMP "io_led[18]" LOCATE = SITE "P17" LEVEL 1;
@@ -63,19 +63,19 @@ COMP "io_led[19]" LOCATE = SITE "P21" LEVEL 1;
 COMP "spi_mosi" LOCATE = SITE "P44" LEVEL 1;
 TIMEGRP clk = BEL "M_state_q_FSM_FFd4" BEL "M_state_q_FSM_FFd1" BEL
         "M_state_q_FSM_FFd3" BEL "M_state_q_FSM_FFd2" BEL "M_player_q" BEL
-        "M_player_q_1" BEL "M_state_q_FSM_FFd2_1" BEL "M_state_q_FSM_FFd4_1"
-        BEL "M_state_q_FSM_FFd1_1" BEL "M_state_q_FSM_FFd3_1" BEL
-        "M_state_q_FSM_FFd2_2" BEL "M_state_q_FSM_FFd4_2" BEL
-        "M_state_q_FSM_FFd1_2" BEL "M_state_q_FSM_FFd3_2" BEL
-        "cpu16/score2_reg/M_regs_q_15" BEL "cpu16/score2_reg/M_regs_q_14" BEL
-        "cpu16/score2_reg/M_regs_q_13" BEL "cpu16/score2_reg/M_regs_q_12" BEL
-        "cpu16/score2_reg/M_regs_q_11" BEL "cpu16/score2_reg/M_regs_q_10" BEL
-        "cpu16/score2_reg/M_regs_q_9" BEL "cpu16/score2_reg/M_regs_q_8" BEL
-        "cpu16/score2_reg/M_regs_q_7" BEL "cpu16/score2_reg/M_regs_q_6" BEL
-        "cpu16/score2_reg/M_regs_q_5" BEL "cpu16/score2_reg/M_regs_q_4" BEL
-        "cpu16/score2_reg/M_regs_q_3" BEL "cpu16/score2_reg/M_regs_q_2" BEL
-        "cpu16/score2_reg/M_regs_q_1" BEL "cpu16/score2_reg/M_regs_q_0" BEL
-        "cpu16/r0_reg/M_regs_q_0" BEL "cpu16/score1_reg/M_regs_q_15" BEL
+        "M_state_q_FSM_FFd4_1" BEL "M_state_q_FSM_FFd1_1" BEL
+        "M_state_q_FSM_FFd3_1" BEL "M_state_q_FSM_FFd2_1" BEL
+        "M_state_q_FSM_FFd4_2" BEL "M_state_q_FSM_FFd1_2" BEL
+        "M_state_q_FSM_FFd3_2" BEL "M_state_q_FSM_FFd2_2" BEL "M_player_q_1"
+        BEL "cpu16/score2_reg/M_regs_q_15" BEL "cpu16/score2_reg/M_regs_q_14"
+        BEL "cpu16/score2_reg/M_regs_q_13" BEL "cpu16/score2_reg/M_regs_q_12"
+        BEL "cpu16/score2_reg/M_regs_q_11" BEL "cpu16/score2_reg/M_regs_q_10"
+        BEL "cpu16/score2_reg/M_regs_q_9" BEL "cpu16/score2_reg/M_regs_q_8"
+        BEL "cpu16/score2_reg/M_regs_q_7" BEL "cpu16/score2_reg/M_regs_q_6"
+        BEL "cpu16/score2_reg/M_regs_q_5" BEL "cpu16/score2_reg/M_regs_q_4"
+        BEL "cpu16/score2_reg/M_regs_q_3" BEL "cpu16/score2_reg/M_regs_q_2"
+        BEL "cpu16/score2_reg/M_regs_q_1" BEL "cpu16/score2_reg/M_regs_q_0"
+        BEL "cpu16/r0_reg/M_regs_q_0" BEL "cpu16/score1_reg/M_regs_q_15" BEL
         "cpu16/score1_reg/M_regs_q_14" BEL "cpu16/score1_reg/M_regs_q_13" BEL
         "cpu16/score1_reg/M_regs_q_12" BEL "cpu16/score1_reg/M_regs_q_11" BEL
         "cpu16/score1_reg/M_regs_q_10" BEL "cpu16/score1_reg/M_regs_q_9" BEL
@@ -167,7 +167,135 @@ TIMEGRP clk = BEL "M_state_q_FSM_FFd4" BEL "M_state_q_FSM_FFd1" BEL
         BEL "seg/ctr/M_ctr_q_9" BEL "seg/ctr/M_ctr_q_10" BEL
         "seg/ctr/M_ctr_q_11" BEL "seg/ctr/M_ctr_q_12" BEL "seg/ctr/M_ctr_q_13"
         BEL "seg/ctr/M_ctr_q_14" BEL "seg/ctr/M_ctr_q_15" BEL
-        "seg/ctr/M_ctr_q_16" BEL "seg/ctr/M_ctr_q_17";
+        "seg/ctr/M_ctr_q_16" BEL "seg/ctr/M_ctr_q_17" BEL
+        "random/random1/M_y_q_31" BEL "random/random1/M_y_q_30" BEL
+        "random/random1/M_y_q_29" BEL "random/random1/M_y_q_28" BEL
+        "random/random1/M_y_q_27" BEL "random/random1/M_y_q_26" BEL
+        "random/random1/M_y_q_25" BEL "random/random1/M_y_q_24" BEL
+        "random/random1/M_y_q_23" BEL "random/random1/M_y_q_22" BEL
+        "random/random1/M_y_q_21" BEL "random/random1/M_y_q_20" BEL
+        "random/random1/M_y_q_19" BEL "random/random1/M_y_q_18" BEL
+        "random/random1/M_y_q_17" BEL "random/random1/M_y_q_16" BEL
+        "random/random1/M_y_q_15" BEL "random/random1/M_y_q_14" BEL
+        "random/random1/M_y_q_13" BEL "random/random1/M_y_q_12" BEL
+        "random/random1/M_y_q_11" BEL "random/random1/M_y_q_10" BEL
+        "random/random1/M_y_q_9" BEL "random/random1/M_y_q_8" BEL
+        "random/random1/M_y_q_7" BEL "random/random1/M_y_q_6" BEL
+        "random/random1/M_y_q_5" BEL "random/random1/M_y_q_4" BEL
+        "random/random1/M_y_q_3" BEL "random/random1/M_y_q_2" BEL
+        "random/random1/M_y_q_1" BEL "random/random1/M_y_q_0" BEL
+        "random/random1/M_z_q_31" BEL "random/random1/M_z_q_30" BEL
+        "random/random1/M_z_q_29" BEL "random/random1/M_z_q_28" BEL
+        "random/random1/M_z_q_27" BEL "random/random1/M_z_q_26" BEL
+        "random/random1/M_z_q_25" BEL "random/random1/M_z_q_24" BEL
+        "random/random1/M_z_q_23" BEL "random/random1/M_z_q_22" BEL
+        "random/random1/M_z_q_21" BEL "random/random1/M_z_q_20" BEL
+        "random/random1/M_z_q_19" BEL "random/random1/M_z_q_18" BEL
+        "random/random1/M_z_q_17" BEL "random/random1/M_z_q_16" BEL
+        "random/random1/M_z_q_15" BEL "random/random1/M_z_q_14" BEL
+        "random/random1/M_z_q_13" BEL "random/random1/M_z_q_12" BEL
+        "random/random1/M_z_q_11" BEL "random/random1/M_z_q_10" BEL
+        "random/random1/M_z_q_9" BEL "random/random1/M_z_q_8" BEL
+        "random/random1/M_z_q_7" BEL "random/random1/M_z_q_6" BEL
+        "random/random1/M_z_q_5" BEL "random/random1/M_z_q_4" BEL
+        "random/random1/M_z_q_3" BEL "random/random1/M_z_q_2" BEL
+        "random/random1/M_z_q_1" BEL "random/random1/M_z_q_0" BEL
+        "random/random1/M_w_q_31" BEL "random/random1/M_w_q_30" BEL
+        "random/random1/M_w_q_29" BEL "random/random1/M_w_q_28" BEL
+        "random/random1/M_w_q_27" BEL "random/random1/M_w_q_26" BEL
+        "random/random1/M_w_q_25" BEL "random/random1/M_w_q_24" BEL
+        "random/random1/M_w_q_23" BEL "random/random1/M_w_q_22" BEL
+        "random/random1/M_w_q_21" BEL "random/random1/M_w_q_20" BEL
+        "random/random1/M_w_q_19" BEL "random/random1/M_w_q_18" BEL
+        "random/random1/M_w_q_17" BEL "random/random1/M_w_q_16" BEL
+        "random/random1/M_w_q_15" BEL "random/random1/M_w_q_14" BEL
+        "random/random1/M_w_q_13" BEL "random/random1/M_w_q_12" BEL
+        "random/random1/M_w_q_11" BEL "random/random1/M_w_q_10" BEL
+        "random/random1/M_w_q_9" BEL "random/random1/M_w_q_8" BEL
+        "random/random1/M_w_q_7" BEL "random/random1/M_w_q_6" BEL
+        "random/random1/M_w_q_5" BEL "random/random1/M_w_q_4" BEL
+        "random/random1/M_w_q_3" BEL "random/random1/M_w_q_2" BEL
+        "random/random1/M_w_q_1" BEL "random/random1/M_w_q_0" BEL
+        "random/random1/M_x_q_31" BEL "random/random1/M_x_q_30" BEL
+        "random/random1/M_x_q_29" BEL "random/random1/M_x_q_28" BEL
+        "random/random1/M_x_q_27" BEL "random/random1/M_x_q_26" BEL
+        "random/random1/M_x_q_25" BEL "random/random1/M_x_q_24" BEL
+        "random/random1/M_x_q_23" BEL "random/random1/M_x_q_22" BEL
+        "random/random1/M_x_q_21" BEL "random/random1/M_x_q_20" BEL
+        "random/random1/M_x_q_19" BEL "random/random1/M_x_q_18" BEL
+        "random/random1/M_x_q_17" BEL "random/random1/M_x_q_16" BEL
+        "random/random1/M_x_q_15" BEL "random/random1/M_x_q_14" BEL
+        "random/random1/M_x_q_13" BEL "random/random1/M_x_q_12" BEL
+        "random/random1/M_x_q_11" BEL "random/random1/M_x_q_10" BEL
+        "random/random1/M_x_q_9" BEL "random/random1/M_x_q_8" BEL
+        "random/random1/M_x_q_7" BEL "random/random1/M_x_q_6" BEL
+        "random/random1/M_x_q_5" BEL "random/random1/M_x_q_4" BEL
+        "random/random1/M_x_q_3" BEL "random/random1/M_x_q_2" BEL
+        "random/random1/M_x_q_1" BEL "random/random1/M_x_q_0" BEL
+        "random/random2/M_y_q_31" BEL "random/random2/M_y_q_30" BEL
+        "random/random2/M_y_q_29" BEL "random/random2/M_y_q_28" BEL
+        "random/random2/M_y_q_27" BEL "random/random2/M_y_q_26" BEL
+        "random/random2/M_y_q_25" BEL "random/random2/M_y_q_24" BEL
+        "random/random2/M_y_q_23" BEL "random/random2/M_y_q_22" BEL
+        "random/random2/M_y_q_21" BEL "random/random2/M_y_q_20" BEL
+        "random/random2/M_y_q_19" BEL "random/random2/M_y_q_18" BEL
+        "random/random2/M_y_q_17" BEL "random/random2/M_y_q_16" BEL
+        "random/random2/M_y_q_15" BEL "random/random2/M_y_q_14" BEL
+        "random/random2/M_y_q_13" BEL "random/random2/M_y_q_12" BEL
+        "random/random2/M_y_q_11" BEL "random/random2/M_y_q_10" BEL
+        "random/random2/M_y_q_9" BEL "random/random2/M_y_q_8" BEL
+        "random/random2/M_y_q_7" BEL "random/random2/M_y_q_6" BEL
+        "random/random2/M_y_q_5" BEL "random/random2/M_y_q_4" BEL
+        "random/random2/M_y_q_3" BEL "random/random2/M_y_q_2" BEL
+        "random/random2/M_y_q_1" BEL "random/random2/M_y_q_0" BEL
+        "random/random2/M_z_q_31" BEL "random/random2/M_z_q_30" BEL
+        "random/random2/M_z_q_29" BEL "random/random2/M_z_q_28" BEL
+        "random/random2/M_z_q_27" BEL "random/random2/M_z_q_26" BEL
+        "random/random2/M_z_q_25" BEL "random/random2/M_z_q_24" BEL
+        "random/random2/M_z_q_23" BEL "random/random2/M_z_q_22" BEL
+        "random/random2/M_z_q_21" BEL "random/random2/M_z_q_20" BEL
+        "random/random2/M_z_q_19" BEL "random/random2/M_z_q_18" BEL
+        "random/random2/M_z_q_17" BEL "random/random2/M_z_q_16" BEL
+        "random/random2/M_z_q_15" BEL "random/random2/M_z_q_14" BEL
+        "random/random2/M_z_q_13" BEL "random/random2/M_z_q_12" BEL
+        "random/random2/M_z_q_11" BEL "random/random2/M_z_q_10" BEL
+        "random/random2/M_z_q_9" BEL "random/random2/M_z_q_8" BEL
+        "random/random2/M_z_q_7" BEL "random/random2/M_z_q_6" BEL
+        "random/random2/M_z_q_5" BEL "random/random2/M_z_q_4" BEL
+        "random/random2/M_z_q_3" BEL "random/random2/M_z_q_2" BEL
+        "random/random2/M_z_q_1" BEL "random/random2/M_z_q_0" BEL
+        "random/random2/M_w_q_31" BEL "random/random2/M_w_q_30" BEL
+        "random/random2/M_w_q_29" BEL "random/random2/M_w_q_28" BEL
+        "random/random2/M_w_q_27" BEL "random/random2/M_w_q_26" BEL
+        "random/random2/M_w_q_25" BEL "random/random2/M_w_q_24" BEL
+        "random/random2/M_w_q_23" BEL "random/random2/M_w_q_22" BEL
+        "random/random2/M_w_q_21" BEL "random/random2/M_w_q_20" BEL
+        "random/random2/M_w_q_19" BEL "random/random2/M_w_q_18" BEL
+        "random/random2/M_w_q_17" BEL "random/random2/M_w_q_16" BEL
+        "random/random2/M_w_q_15" BEL "random/random2/M_w_q_14" BEL
+        "random/random2/M_w_q_13" BEL "random/random2/M_w_q_12" BEL
+        "random/random2/M_w_q_11" BEL "random/random2/M_w_q_10" BEL
+        "random/random2/M_w_q_9" BEL "random/random2/M_w_q_8" BEL
+        "random/random2/M_w_q_7" BEL "random/random2/M_w_q_6" BEL
+        "random/random2/M_w_q_5" BEL "random/random2/M_w_q_4" BEL
+        "random/random2/M_w_q_3" BEL "random/random2/M_w_q_2" BEL
+        "random/random2/M_w_q_1" BEL "random/random2/M_w_q_0" BEL
+        "random/random2/M_x_q_31" BEL "random/random2/M_x_q_30" BEL
+        "random/random2/M_x_q_29" BEL "random/random2/M_x_q_28" BEL
+        "random/random2/M_x_q_27" BEL "random/random2/M_x_q_26" BEL
+        "random/random2/M_x_q_25" BEL "random/random2/M_x_q_24" BEL
+        "random/random2/M_x_q_23" BEL "random/random2/M_x_q_22" BEL
+        "random/random2/M_x_q_21" BEL "random/random2/M_x_q_20" BEL
+        "random/random2/M_x_q_19" BEL "random/random2/M_x_q_18" BEL
+        "random/random2/M_x_q_17" BEL "random/random2/M_x_q_16" BEL
+        "random/random2/M_x_q_15" BEL "random/random2/M_x_q_14" BEL
+        "random/random2/M_x_q_13" BEL "random/random2/M_x_q_12" BEL
+        "random/random2/M_x_q_11" BEL "random/random2/M_x_q_10" BEL
+        "random/random2/M_x_q_9" BEL "random/random2/M_x_q_8" BEL
+        "random/random2/M_x_q_7" BEL "random/random2/M_x_q_6" BEL
+        "random/random2/M_x_q_5" BEL "random/random2/M_x_q_4" BEL
+        "random/random2/M_x_q_3" BEL "random/random2/M_x_q_2" BEL
+        "random/random2/M_x_q_1" BEL "random/random2/M_x_q_0";
 TS_clk = PERIOD TIMEGRP "clk" 50 MHz HIGH 50%;
 SCHEMATIC END;
 

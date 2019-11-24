@@ -104,6 +104,18 @@ module mojo_top_0 (
     .in(M_center_detect_in),
     .out(M_center_detect_out)
   );
+  wire [1-1:0] M_counter1_value;
+  counter_8 counter1 (
+    .clk(clk),
+    .rst(dynamicRst1),
+    .value(M_counter1_value)
+  );
+  wire [1-1:0] M_counter2_value;
+  counter_8 counter2 (
+    .clk(clk),
+    .rst(dynamicRst2),
+    .value(M_counter2_value)
+  );
   localparam WAIT_state = 4'd0;
   localparam CHECKZERO_state = 4'd1;
   localparam CHECKZEROI_state = 4'd2;
@@ -123,7 +135,7 @@ module mojo_top_0 (
   
   reg M_player_d, M_player_q = P1_player;
   wire [1-1:0] M_p1Interim_out;
-  register_8 p1Interim (
+  register_10 p1Interim (
     .clk(clk),
     .rst(rst),
     .en(p1IEn),
@@ -131,7 +143,7 @@ module mojo_top_0 (
     .out(M_p1Interim_out)
   );
   wire [1-1:0] M_p2Interim_out;
-  register_8 p2Interim (
+  register_10 p2Interim (
     .clk(clk),
     .rst(rst),
     .en(p2IEn),
@@ -141,7 +153,7 @@ module mojo_top_0 (
   wire [16-1:0] M_cpu16_out;
   wire [16-1:0] M_cpu16_s1;
   wire [16-1:0] M_cpu16_s2;
-  cpu_10 cpu16 (
+  cpu_12 cpu16 (
     .clk(clk),
     .rst(rst),
     .instr(instruction),
@@ -154,36 +166,32 @@ module mojo_top_0 (
   wire [7-1:0] M_seg_seg;
   wire [4-1:0] M_seg_sel;
   reg [16-1:0] M_seg_values;
-  multi_seven_seg_11 seg (
+  multi_seven_seg_13 seg (
     .clk(clk),
     .rst(rst),
     .values(M_seg_values),
     .seg(M_seg_seg),
     .sel(M_seg_sel)
   );
-  wire [1-1:0] M_counter1_value;
-  counter_12 counter1 (
+  wire [64-1:0] M_random_out;
+  reg [1-1:0] M_random_next;
+  randomSet_14 random (
     .clk(clk),
-    .rst(dynamicRst1),
-    .value(M_counter1_value)
-  );
-  wire [1-1:0] M_counter2_value;
-  counter_12 counter2 (
-    .clk(clk),
-    .rst(dynamicRst2),
-    .value(M_counter2_value)
+    .rst(rst),
+    .next(M_random_next),
+    .out(M_random_out)
   );
   
   wire [8-1:0] M_dig2to1P1_out;
   reg [8-1:0] M_dig2to1P1_num;
-  dig2to1_14 dig2to1P1 (
+  dig2to1_15 dig2to1P1 (
     .num(M_dig2to1P1_num),
     .out(M_dig2to1P1_out)
   );
   
   wire [8-1:0] M_dig2to1P2_out;
   reg [8-1:0] M_dig2to1P2_num;
-  dig2to1_14 dig2to1P2 (
+  dig2to1_15 dig2to1P2 (
     .num(M_dig2to1P2_num),
     .out(M_dig2to1P2_out)
   );
@@ -211,6 +219,7 @@ module mojo_top_0 (
     p1TestInp = {2'h0, M_left_cond_out, M_down_cond_out};
     p2TestInp = {2'h0, M_up_cond_out, M_right_cond_out};
     io_led = 1'h0;
+    io_led[8+7-:8] = {M_random_out[(M_cpu16_s1)*4+3-:4], M_random_out[(M_cpu16_s2)*4+3-:4]};
     io_led[4+3-:4] = answers[(M_cpu16_s1)*4+3-:4];
     io_led[0+3-:4] = answers[(M_cpu16_s2)*4+3-:4];
     dynamicRst1 = 1'h0;
@@ -220,9 +229,11 @@ module mojo_top_0 (
     p1IData = 1'h0;
     p2IData = 1'h0;
     instruction = 17'h1ffff;
+    M_random_next = 1'h0;
     
     case (M_state_q)
       WAIT_state: begin
+        M_random_next = 1'h1;
         io_led[0+23-:24] = 24'hffffff;
         if (M_center_detect_out) begin
           M_state_d = CHECKZERO_state;
@@ -372,11 +383,9 @@ module mojo_top_0 (
         
         case (M_player_q)
           P1_player: begin
-            io_led[16+7-:8] = 8'hff;
             M_seg_values = 16'ha1bb;
           end
           P2_player: begin
-            io_led[0+7-:8] = 8'hff;
             M_seg_values = 16'ha2bb;
           end
         endcase

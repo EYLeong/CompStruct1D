@@ -1,0 +1,49 @@
+module randomSet (
+    input clk,  // clock
+    input next,
+    input rst,
+    output out[16][4]
+  ) {
+  
+  .clk(clk){
+    .next(next){
+      .rst(rst){ // Never need to reset so hardcode to 0
+        pn_gen random1(.seed(32b0)); // Arbitrarily choose seeds
+        pn_gen random2(.seed(32b1));
+      }
+    }
+  }
+  
+  sig outI[16][4];
+  var i;
+  
+  always {
+    
+    // Take every 4 bits of the 2 32 bit randomly generated numbers for a total of 16 4-bit numbers.
+    outI[0] = random1.num[3:0];
+    outI[1] = random1.num[7:4];
+    outI[2] = random1.num[11:8];
+    outI[3] = random1.num[15:12];
+    outI[4] = random1.num[19:16];
+    outI[5] = random1.num[23:20];
+    outI[6] = random1.num[27:24];
+    outI[7] = random1.num[31:28];
+    outI[8] = random2.num[3:0];
+    outI[9] = random2.num[7:4];
+    outI[10] = random2.num[11:8];
+    outI[11] = random2.num[15:12];
+    outI[12] = random2.num[19:16];
+    outI[13] = random2.num[23:20];
+    outI[14] = random2.num[27:24];
+    outI[15] = random2.num[31:28];
+    
+    // If the randomly generated 4-bit number happens to be 0, replace it with 1111
+    for(i=0;i<16;i++){
+      if(outI[i] == 0){
+        out[i] = 4b1111;
+      } else {
+        out[i] = outI[i];
+      }
+    }
+  }
+}

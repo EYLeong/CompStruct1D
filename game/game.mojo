@@ -3,6 +3,7 @@
   <files>
     <src top="true">mojo_top.luc</src>
     <src>decoder2.luc</src>
+    <src>randomSet.luc</src>
     <src>register.luc</src>
     <src>dig2to1.luc</src>
     <src>adder.luc</src>
