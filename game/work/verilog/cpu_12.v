@@ -27,7 +27,7 @@ module cpu_12 (
   wire [1-1:0] M_reg_select_o0;
   wire [1-1:0] M_reg_select_o1;
   wire [1-1:0] M_reg_select_o2;
-  decoder2_22 reg_select (
+  decoder2_23 reg_select (
     .we_adr(instr[12+1-:2]),
     .inp(1'h1),
     .o0(M_reg_select_o0),
@@ -36,7 +36,7 @@ module cpu_12 (
   );
   
   wire [16-1:0] M_r0_reg_out;
-  register_23 r0_reg (
+  register_24 r0_reg (
     .clk(clk),
     .rst(rst),
     .en(M_reg_select_o0),
@@ -45,7 +45,7 @@ module cpu_12 (
   );
   
   wire [16-1:0] M_score1_reg_out;
-  register_23 score1_reg (
+  register_24 score1_reg (
     .clk(clk),
     .rst(rst),
     .en(M_reg_select_o1),
@@ -54,7 +54,7 @@ module cpu_12 (
   );
   
   wire [16-1:0] M_score2_reg_out;
-  register_23 score2_reg (
+  register_24 score2_reg (
     .clk(clk),
     .rst(rst),
     .en(M_reg_select_o2),
@@ -63,7 +63,7 @@ module cpu_12 (
   );
   
   wire [16-1:0] M_reg_mux8_out;
-  mux8_26 reg_mux8 (
+  mux8_27 reg_mux8 (
     .lll(M_r0_reg_out),
     .llh(M_score1_reg_out),
     .lhl(M_score2_reg_out),
@@ -81,7 +81,7 @@ module cpu_12 (
   wire [1-1:0] M_alu16_v;
   wire [1-1:0] M_alu16_n;
   wire [1-1:0] M_alu16_err;
-  alu_27 alu16 (
+  alu_28 alu16 (
     .a(M_reg_mux8_out),
     .b({10'h000, instr[6+5-:6]}),
     .alufn(instr[0+5-:6]),

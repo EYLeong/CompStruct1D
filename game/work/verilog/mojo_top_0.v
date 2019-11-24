@@ -150,6 +150,7 @@ module mojo_top_0 (
     .data(p2IData),
     .out(M_p2Interim_out)
   );
+  reg M_winSounded_d, M_winSounded_q = 1'h0;
   wire [16-1:0] M_cpu16_out;
   wire [16-1:0] M_cpu16_s1;
   wire [16-1:0] M_cpu16_s2;
@@ -181,17 +182,30 @@ module mojo_top_0 (
     .next(M_random_next),
     .out(M_random_out)
   );
+  wire [1-1:0] M_tx_tx;
+  wire [1-1:0] M_tx_busy;
+  reg [8-1:0] M_tx_data;
+  reg [1-1:0] M_tx_new_data;
+  uart_tx_15 tx (
+    .clk(clk),
+    .rst(rst),
+    .block(1'h0),
+    .data(M_tx_data),
+    .new_data(M_tx_new_data),
+    .tx(M_tx_tx),
+    .busy(M_tx_busy)
+  );
   
   wire [8-1:0] M_dig2to1P1_out;
   reg [8-1:0] M_dig2to1P1_num;
-  dig2to1_15 dig2to1P1 (
+  dig2to1_16 dig2to1P1 (
     .num(M_dig2to1P1_num),
     .out(M_dig2to1P1_out)
   );
   
   wire [8-1:0] M_dig2to1P2_out;
   reg [8-1:0] M_dig2to1P2_num;
-  dig2to1_15 dig2to1P2 (
+  dig2to1_16 dig2to1P2 (
     .num(M_dig2to1P2_num),
     .out(M_dig2to1P2_out)
   );
@@ -199,6 +213,7 @@ module mojo_top_0 (
   always @* begin
     M_state_d = M_state_q;
     M_player_d = M_player_q;
+    M_winSounded_d = M_winSounded_q;
     
     M_reset_cond_in = ~rst_n;
     rst = M_reset_cond_out;
@@ -230,6 +245,9 @@ module mojo_top_0 (
     p2IData = 1'h0;
     instruction = 17'h1ffff;
     M_random_next = 1'h0;
+    M_tx_data = 1'h0;
+    M_tx_new_data = 1'h0;
+    avr_rx = M_tx_tx;
     
     case (M_state_q)
       WAIT_state: begin
@@ -337,12 +355,20 @@ module mojo_top_0 (
             p1IEn = 1'h1;
             p1IData = 1'h1;
             M_state_d = CHECKWIN_state;
+            if (!M_tx_busy) begin
+              M_tx_data = 7'h61;
+              M_tx_new_data = 1'h1;
+            end
           end
           P2_player: begin
             instruction = 17'h0a040;
             p2IEn = 1'h1;
             p2IData = 1'h1;
             M_state_d = CHECKWIN_state;
+            if (!M_tx_busy) begin
+              M_tx_data = 7'h62;
+              M_tx_new_data = 1'h1;
+            end
           end
         endcase
       end
@@ -384,9 +410,19 @@ module mojo_top_0 (
         case (M_player_q)
           P1_player: begin
             M_seg_values = 16'ha1bb;
+            if (!M_tx_busy & !M_winSounded_q) begin
+              M_tx_data = 7'h65;
+              M_tx_new_data = 1'h1;
+              M_winSounded_d = 1'h1;
+            end
           end
           P2_player: begin
             M_seg_values = 16'ha2bb;
+            if (!M_tx_busy & !M_winSounded_q) begin
+              M_tx_data = 7'h66;
+              M_tx_new_data = 1'h1;
+              M_winSounded_d = 1'h1;
+            end
           end
         endcase
       end
@@ -433,6 +469,10 @@ module mojo_top_0 (
             p1IData = 1'h1;
             M_state_d = CHECKZERO_state;
             M_player_d = P2_player;
+            if (!M_tx_busy) begin
+              M_tx_data = 7'h63;
+              M_tx_new_data = 1'h1;
+            end
           end
           P2_player: begin
             instruction = 17'h0a041;
@@ -440,6 +480,10 @@ module mojo_top_0 (
             p2IData = 1'h1;
             M_state_d = CHECKZERO_state;
             M_player_d = P1_player;
+            if (!M_tx_busy) begin
+              M_tx_data = 7'h64;
+              M_tx_new_data = 1'h1;
+            end
           end
         endcase
       end
@@ -447,14 +491,15 @@ module mojo_top_0 (
     led = {M_counter1_value, M_counter2_value, M_p1Interim_out, M_p2Interim_out};
     spi_miso = 1'bz;
     spi_channel = 4'bzzzz;
-    avr_rx = 1'bz;
   end
   
   always @(posedge clk) begin
     if (rst == 1'b1) begin
+      M_winSounded_q <= 1'h0;
       M_state_q <= 1'h0;
       M_player_q <= 1'h0;
     end else begin
+      M_winSounded_q <= M_winSounded_d;
       M_state_q <= M_state_d;
       M_player_q <= M_player_d;
     end

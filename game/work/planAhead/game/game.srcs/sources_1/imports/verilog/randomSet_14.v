@@ -14,7 +14,7 @@ module randomSet_14 (
   
   
   wire [32-1:0] M_random1_num;
-  pn_gen_31 random1 (
+  pn_gen_32 random1 (
     .clk(clk),
     .next(next),
     .rst(rst),
@@ -22,7 +22,7 @@ module randomSet_14 (
     .num(M_random1_num)
   );
   wire [32-1:0] M_random2_num;
-  pn_gen_31 random2 (
+  pn_gen_32 random2 (
     .clk(clk),
     .next(next),
     .rst(rst),

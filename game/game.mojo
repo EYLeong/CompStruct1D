@@ -23,6 +23,7 @@
     <component>button_conditioner.luc</component>
     <component>pn_gen.luc</component>
     <component>decoder.luc</component>
+    <component>uart_tx.luc</component>
     <component>reset_conditioner.luc</component>
     <component>edge_detector.luc</component>
   </files>

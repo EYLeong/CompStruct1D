@@ -51,6 +51,7 @@ module mojo_top (
     button_conditioner center_cond;
     edge_detector center_detect(#FALL(0));
     
+    // counters to determine when it is time to deduct score
     counter counter1(#SIZE(1), #DIV(21), .rst(dynamicRst1));
     counter counter2(#SIZE(1), #DIV(21), .rst(dynamicRst2));
     
@@ -61,6 +62,7 @@ module mojo_top (
       
       register p1Interim(#WIDTH(1), .en(p1IEn), .data(p1IData)); // booleans to check whether players have released their buttons after a score addition/deduction
       register p2Interim(#WIDTH(1), .en(p2IEn), .data(p2IData));
+      dff winSounded; // boolean to check whether the win signal has been sent over the serial port
       
       cpu cpu16(.instr(instruction), .p1_button(p1TestInp), .p2_button(p2TestInp)); // CPU for computation
       
@@ -69,6 +71,9 @@ module mojo_top (
       
       // random generator
       randomSet random;
+      
+      // USB serial port transmittion
+      uart_tx tx(.block(0));
     }
   }
   
@@ -122,6 +127,10 @@ module mojo_top (
     instruction = 17x{b1}; // Default instruction to idle the CPU
     
     random.next = 0; // By default do not generate new numbers
+    
+    tx.data = 0; // by default do not send anything over the serial port
+    tx.new_data = 0;
+    avr_rx = tx.tx; // connect output of module to FPGA output
     
     // Main state machine
     case(state.q){
@@ -219,12 +228,22 @@ module mojo_top (
             p1IEn = 1;
             p1IData = 1; // put player into interim after successful addition of score.
             state.d = state.CHECKWIN;
+            
+            if(!tx.busy){ // Send if not busy
+              tx.data = "a";
+              tx.new_data = 1;
+            }
           
           player.P2:
             instruction = c{b010, b10, b000001, 6x{b0}};
             p2IEn = 1;
             p2IData = 1;
             state.d = state.CHECKWIN;
+            
+            if(!tx.busy){
+              tx.data = "b";
+              tx.new_data = 1;
+            }
         }
       
       state.CHECKWIN:
@@ -260,9 +279,19 @@ module mojo_top (
         case(player.q){
           player.P1:
             seg.values = {4d10,4d1,4d11,4d11}; // Hardcoded P1^^
+            if(!tx.busy & !winSounded.q){ // Only sent if it has not been sent before. Prevent continuous sending.
+              tx.data = "e";
+              tx.new_data = 1;
+              winSounded.d = 1;
+            }
           
           player.P2:
             seg.values = {4d10,4d2,4d11,4d11}; // Hardcoded P2^^
+            if(!tx.busy & !winSounded.q){
+              tx.data = "f";
+              tx.new_data = 1;
+              winSounded.d = 1;
+            }
         }
       
       state.CHECKSCOREZERO:
@@ -303,6 +332,11 @@ module mojo_top (
             p1IData = 1; // put player into interim after deduction of score.
             state.d = state.CHECKZERO;
             player.d = player.P2;
+            
+            if(!tx.busy){
+              tx.data = "c";
+              tx.new_data = 1;
+            }
           
           player.P2:
             instruction = c{b010, b10, b000001, b000001};
@@ -310,6 +344,11 @@ module mojo_top (
             p2IData = 1;
             state.d = state.CHECKZERO;
             player.d = player.P1;
+            
+            if(!tx.busy){
+              tx.data = "d";
+              tx.new_data = 1;
+            }
         }
     }
     // Testing/Debugging
@@ -317,6 +356,5 @@ module mojo_top (
     
     spi_miso = bz;          // not using SPI
     spi_channel = bzzzz;    // not using flags
-    avr_rx = bz;            // not using serial port
   }
 }
