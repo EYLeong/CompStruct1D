@@ -14,14 +14,16 @@ module mojo_top (
     output io_sel[4],
     output io_seg[8],
     
-    //Debugging/Testing
-    input io_button[5],
-    output io_led[24]
+    // TODO: Implement in UCF
+    input p1Raw[4],
+    input p2Raw[4],
+    input start,
+    output p1LED[4],
+    output p2LED[4]
     
   ) {
   
   sig rst;                  // reset signal
-  sig answers[16][4]; // Sequences that the players are supposed to press
   sig instruction[17]; // 17bit instruction to cpu
   sig p1input[4]; // 4bit button inputs that have been conditioned
   sig p2input[4];
@@ -34,22 +36,25 @@ module mojo_top (
   sig p1IData;
   sig p2IData;
   
-  // Testing / Debugging
-  sig p1TestInp[4];
-  sig p2TestInp[4];
-  
   .clk(clk) {
     // The reset conditioner is used to synchronize the reset signal to the FPGA
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
     
     // button conditioning
-    button_conditioner left_cond;
-    button_conditioner right_cond;
-    button_conditioner up_cond;
-    button_conditioner down_cond;
-    button_conditioner center_cond;
-    edge_detector center_detect(#FALL(0));
+    button_conditioner p1c1;
+    button_conditioner p1c2;
+    button_conditioner p1c3;
+    button_conditioner p1c4;
+    
+    button_conditioner p2c1;
+    button_conditioner p2c2;
+    button_conditioner p2c3;
+    button_conditioner p2c4;
+    
+    button_conditioner startCond;
+    edge_detector startDetect;
+    
     
     // counters to determine when it is time to deduct score
     counter counter1(#SIZE(1), #DIV(21), .rst(dynamicRst1));
@@ -64,7 +69,7 @@ module mojo_top (
       register p2Interim(#WIDTH(1), .en(p2IEn), .data(p2IData));
       dff winSounded; // boolean to check whether the win signal has been sent over the serial port
       
-      cpu cpu16(.instr(instruction), .p1_button(p1TestInp), .p2_button(p2TestInp)); // CPU for computation
+      cpu cpu16(.instr(instruction), .p1_button(p1input), .p2_button(p2input)); // CPU for computation
       
       // 7-Segment display
       multi_seven_seg seg;
@@ -85,9 +90,13 @@ module mojo_top (
     reset_cond.in = ~rst_n; // input raw inverted reset signal
     rst = reset_cond.out;   // conditioned reset
     
-    answers = {b0010, b0011, b0001, b0011, b0001, b0011, b0010, b0001, b0011, b0001, b0010, b0001, b0011, b0010, b0001, b0011};
-    p1ideal = c{b00, answers[cpu16.s1]};
-    p2ideal = c{b00, answers[cpu16.s2]};
+    // Determine what the players are supposed to press
+    p1ideal = random.out[cpu16.s1];
+    p2ideal = random.out[cpu16.s2];
+    
+    // TODO: figure out why this is throwing a warning. Should be same dimensions no?
+    p1LED = p1ideal;
+    p2LED = p2ideal;
     
     // 7-Segment display
     dig2to1P1.num = cpu16.s1;
@@ -97,28 +106,26 @@ module mojo_top (
     io_sel = ~seg.sel;
     
     // Button conditioning
-    left_cond.in = io_button[3];
-    right_cond.in = io_button[4];
-    up_cond.in = io_button[0];
-    down_cond.in = io_button[2];
-    center_cond.in = io_button[1];
-    center_detect.in = center_cond.out;
+    p1c1.in = ~p1Raw[0]; // Invert because buttons are connected to ground and using pullup resistors.
+    p1c2.in = ~p1Raw[1];
+    p1c3.in = ~p1Raw[2];
+    p1c4.in = ~p1Raw[3];
+    p1input = c{p1c4.out, p1c3.out, p1c2.out, p1c1.out};
     
-    // Testing/Debugging
-    p1TestInp = c{b00, left_cond.out, down_cond.out};
-    p2TestInp = c{b00, up_cond.out, right_cond.out};
+    p2c1.in = ~p2Raw[0];
+    p2c2.in = ~p2Raw[1];
+    p2c3.in = ~p2Raw[2];
+    p2c4.in = ~p2Raw[3];
+    p2input = c{p2c4.out, p2c3.out, p2c2.out, p2c1.out};
     
-    // Testing/Debugging
-    io_led = 0;
-    io_led[15:8] = c{random.out[cpu16.s1], random.out[cpu16.s2]};
-    io_led[7:4] = answers[cpu16.s1];
-    io_led[3:0] = answers[cpu16.s2];
+    startCond.in = ~start;
+    startDetect.in = startCond.out;
     
     // Reset signals for each player's counters (for detecting when their score should be deducted)
     dynamicRst1 = 0;
     dynamicRst2 = 0;
     
-    // Registers to hold the player state (whether they are in interim or not)
+    // Signals for the registers to hold the player state (whether they are in interim or not)
     p1IEn = 0;
     p2IEn = 0;
     p1IData = 0;
@@ -136,8 +143,7 @@ module mojo_top (
     case(state.q){
       state.WAIT:
         random.next = 1; // Generate new numbers in the WAIT State continuously
-        io_led[23:0] = 24x{b1};
-        if(center_detect.out){
+        if(startDetect.out){
           state.d = state.CHECKZERO;
         }
       
@@ -293,6 +299,11 @@ module mojo_top (
               winSounded.d = 1;
             }
         }
+        
+        // TODO: check if this works. Dynamically reset game if start button is pressed in the WIN state.
+        if(startDetect.out){
+          rst = 1;
+        }
       
       state.CHECKSCOREZERO:
         case(player.q){
@@ -351,9 +362,8 @@ module mojo_top (
             }
         }
     }
-    // Testing/Debugging
-    led = c{counter1.value, counter2.value, p1Interim.out, p2Interim.out};
     
+    led = 0;                // not using LEDs on Mojo
     spi_miso = bz;          // not using SPI
     spi_channel = bzzzz;    // not using flags
   }
