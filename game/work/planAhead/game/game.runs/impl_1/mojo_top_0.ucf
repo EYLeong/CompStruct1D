@@ -5,6 +5,58 @@
 
 
 ####################################################################################
+# Constraints from file : 'board.ucf'
+####################################################################################
+
+NET "p1Raw[0]" LOC = P51;
+NET "p1Raw[0]" IOSTANDARD = LVTTL;
+NET "p1Raw[0]" PULLUP;
+NET "p1Raw[1]" LOC = P41;
+NET "p1Raw[1]" IOSTANDARD = LVTTL;
+NET "p1Raw[1]" PULLUP;
+NET "p1Raw[2]" LOC = P35;
+NET "p1Raw[2]" IOSTANDARD = LVTTL;
+NET "p1Raw[2]" PULLUP;
+NET "p1Raw[3]" LOC = P30;
+NET "p1Raw[3]" IOSTANDARD = LVTTL;
+NET "p1Raw[3]" PULLUP;
+
+NET "p2Raw[0]" LOC = P27;
+NET "p2Raw[0]" IOSTANDARD = LVTTL;
+NET "p2Raw[0]" PULLUP;
+NET "p2Raw[1]" LOC = P24;
+NET "p2Raw[1]" IOSTANDARD = LVTTL;
+NET "p2Raw[1]" PULLUP;
+NET "p2Raw[2]" LOC = P22;
+NET "p2Raw[2]" IOSTANDARD = LVTTL;
+NET "p2Raw[2]" PULLUP;
+NET "p2Raw[3]" LOC = P17;
+NET "p2Raw[3]" IOSTANDARD = LVTTL;
+NET "p2Raw[3]" PULLUP;
+
+NET "p1LED[0]" LOC = P50;
+NET "p1LED[0]" IOSTANDARD = LVTTL;
+NET "p1LED[1]" LOC = P40;
+NET "p1LED[1]" IOSTANDARD = LVTTL;
+NET "p1LED[2]" LOC = P34;
+NET "p1LED[2]" IOSTANDARD = LVTTL;
+NET "p1LED[3]" LOC = P29;
+NET "p1LED[3]" IOSTANDARD = LVTTL;
+
+NET "p2LED[0]" LOC = P26;
+NET "p2LED[0]" IOSTANDARD = LVTTL;
+NET "p2LED[1]" LOC = P23;
+NET "p2LED[1]" IOSTANDARD = LVTTL;
+NET "p2LED[2]" LOC = P21;
+NET "p2LED[2]" IOSTANDARD = LVTTL;
+NET "p2LED[3]" LOC = P16;
+NET "p2LED[3]" IOSTANDARD = LVTTL;
+
+NET "start" LOC = P124;
+NET "start" IOSTANDARD = LVTTL;
+NET "start" PULLUP;
+
+####################################################################################
 # Constraints from file : 'io.ucf'
 ####################################################################################
 
@@ -44,19 +96,12 @@ NET "io_led[15]" IOSTANDARD = LVTTL;
 
 NET "io_led[16]" LOC = P15;
 NET "io_led[16]" IOSTANDARD = LVTTL;
-NET "io_led[17]" LOC = P16;
 NET "io_led[17]" IOSTANDARD = LVTTL;
-NET "io_led[18]" LOC = P17;
 NET "io_led[18]" IOSTANDARD = LVTTL;
-NET "io_led[19]" LOC = P21;
 NET "io_led[19]" IOSTANDARD = LVTTL;
-NET "io_led[20]" LOC = P22;
 NET "io_led[20]" IOSTANDARD = LVTTL;
-NET "io_led[21]" LOC = P23;
 NET "io_led[21]" IOSTANDARD = LVTTL;
-NET "io_led[22]" LOC = P24;
 NET "io_led[22]" IOSTANDARD = LVTTL;
-NET "io_led[23]" LOC = P26;
 NET "io_led[23]" IOSTANDARD = LVTTL;
 
 NET "io_seg[0]" LOC = P5;
@@ -85,21 +130,6 @@ NET "io_sel[2]" IOSTANDARD = LVTTL;
 NET "io_sel[3]" LOC = P12;
 NET "io_sel[3]" IOSTANDARD = LVTTL;
 
-NET "io_button[0]" LOC = P137;
-NET "io_button[0]" IOSTANDARD = LVTTL;
-NET "io_button[0]" PULLDOWN;
-NET "io_button[1]" LOC = P140;
-NET "io_button[1]" IOSTANDARD = LVTTL;
-NET "io_button[1]" PULLDOWN;
-NET "io_button[2]" LOC = P139;
-NET "io_button[2]" IOSTANDARD = LVTTL;
-NET "io_button[2]" PULLDOWN;
-NET "io_button[3]" LOC = P142;
-NET "io_button[3]" IOSTANDARD = LVTTL;
-NET "io_button[3]" PULLDOWN;
-NET "io_button[4]" LOC = P138;
-NET "io_button[4]" IOSTANDARD = LVTTL;
-NET "io_button[4]" PULLDOWN;
 
 
 
@@ -133,7 +163,6 @@ NET "led[4]" LOC = P127;
 NET "led[4]" IOSTANDARD = LVTTL;
 NET "led[5]" LOC = P126;
 NET "led[5]" IOSTANDARD = LVTTL;
-NET "led[6]" LOC = P124;
 NET "led[6]" IOSTANDARD = LVTTL;
 NET "led[7]" LOC = P123;
 NET "led[7]" IOSTANDARD = LVTTL;

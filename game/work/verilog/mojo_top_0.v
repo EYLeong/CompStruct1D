@@ -19,15 +19,17 @@ module mojo_top_0 (
     input avr_rx_busy,
     output reg [3:0] io_sel,
     output reg [7:0] io_seg,
-    input [4:0] io_button,
-    output reg [23:0] io_led
+    output reg [23:0] io_led,
+    input [3:0] p1Raw,
+    input [3:0] p2Raw,
+    input start,
+    output reg [3:0] p1LED,
+    output reg [3:0] p2LED
   );
   
   
   
   reg rst;
-  
-  reg [63:0] answers;
   
   reg [16:0] instruction;
   
@@ -43,17 +45,7 @@ module mojo_top_0 (
   
   reg dynamicRst2;
   
-  reg p1IEn;
-  
-  reg p2IEn;
-  
-  reg p1IData;
-  
-  reg p2IData;
-  
-  reg [3:0] p1TestInp;
-  
-  reg [3:0] p2TestInp;
+  reg startCounterRst;
   
   wire [1-1:0] M_reset_cond_out;
   reg [1-1:0] M_reset_cond_in;
@@ -62,104 +54,125 @@ module mojo_top_0 (
     .in(M_reset_cond_in),
     .out(M_reset_cond_out)
   );
-  wire [1-1:0] M_left_cond_out;
-  reg [1-1:0] M_left_cond_in;
-  button_conditioner_2 left_cond (
+  wire [1-1:0] M_p1c1_out;
+  reg [1-1:0] M_p1c1_in;
+  button_conditioner_2 p1c1 (
     .clk(clk),
-    .in(M_left_cond_in),
-    .out(M_left_cond_out)
+    .in(M_p1c1_in),
+    .out(M_p1c1_out)
   );
-  wire [1-1:0] M_right_cond_out;
-  reg [1-1:0] M_right_cond_in;
-  button_conditioner_2 right_cond (
+  wire [1-1:0] M_p1c2_out;
+  reg [1-1:0] M_p1c2_in;
+  button_conditioner_2 p1c2 (
     .clk(clk),
-    .in(M_right_cond_in),
-    .out(M_right_cond_out)
+    .in(M_p1c2_in),
+    .out(M_p1c2_out)
   );
-  wire [1-1:0] M_up_cond_out;
-  reg [1-1:0] M_up_cond_in;
-  button_conditioner_2 up_cond (
+  wire [1-1:0] M_p1c3_out;
+  reg [1-1:0] M_p1c3_in;
+  button_conditioner_2 p1c3 (
     .clk(clk),
-    .in(M_up_cond_in),
-    .out(M_up_cond_out)
+    .in(M_p1c3_in),
+    .out(M_p1c3_out)
   );
-  wire [1-1:0] M_down_cond_out;
-  reg [1-1:0] M_down_cond_in;
-  button_conditioner_2 down_cond (
+  wire [1-1:0] M_p1c4_out;
+  reg [1-1:0] M_p1c4_in;
+  button_conditioner_2 p1c4 (
     .clk(clk),
-    .in(M_down_cond_in),
-    .out(M_down_cond_out)
+    .in(M_p1c4_in),
+    .out(M_p1c4_out)
   );
-  wire [1-1:0] M_center_cond_out;
-  reg [1-1:0] M_center_cond_in;
-  button_conditioner_2 center_cond (
+  wire [1-1:0] M_p2c1_out;
+  reg [1-1:0] M_p2c1_in;
+  button_conditioner_2 p2c1 (
     .clk(clk),
-    .in(M_center_cond_in),
-    .out(M_center_cond_out)
+    .in(M_p2c1_in),
+    .out(M_p2c1_out)
   );
-  wire [1-1:0] M_center_detect_out;
-  reg [1-1:0] M_center_detect_in;
-  edge_detector_7 center_detect (
+  wire [1-1:0] M_p2c2_out;
+  reg [1-1:0] M_p2c2_in;
+  button_conditioner_2 p2c2 (
     .clk(clk),
-    .in(M_center_detect_in),
-    .out(M_center_detect_out)
+    .in(M_p2c2_in),
+    .out(M_p2c2_out)
+  );
+  wire [1-1:0] M_p2c3_out;
+  reg [1-1:0] M_p2c3_in;
+  button_conditioner_2 p2c3 (
+    .clk(clk),
+    .in(M_p2c3_in),
+    .out(M_p2c3_out)
+  );
+  wire [1-1:0] M_p2c4_out;
+  reg [1-1:0] M_p2c4_in;
+  button_conditioner_2 p2c4 (
+    .clk(clk),
+    .in(M_p2c4_in),
+    .out(M_p2c4_out)
+  );
+  wire [1-1:0] M_startCond_out;
+  reg [1-1:0] M_startCond_in;
+  button_conditioner_2 startCond (
+    .clk(clk),
+    .in(M_startCond_in),
+    .out(M_startCond_out)
+  );
+  wire [1-1:0] M_startDetect_out;
+  reg [1-1:0] M_startDetect_in;
+  edge_detector_11 startDetect (
+    .clk(clk),
+    .in(M_startDetect_in),
+    .out(M_startDetect_out)
   );
   wire [1-1:0] M_counter1_value;
-  counter_8 counter1 (
+  counter_12 counter1 (
     .clk(clk),
     .rst(dynamicRst1),
     .value(M_counter1_value)
   );
   wire [1-1:0] M_counter2_value;
-  counter_8 counter2 (
+  counter_12 counter2 (
     .clk(clk),
     .rst(dynamicRst2),
     .value(M_counter2_value)
   );
+  wire [2-1:0] M_startCounter_value;
+  counter_14 startCounter (
+    .clk(clk),
+    .rst(startCounterRst),
+    .value(M_startCounter_value)
+  );
   localparam WAIT_state = 4'd0;
-  localparam CHECKZERO_state = 4'd1;
-  localparam CHECKZEROI_state = 4'd2;
-  localparam CHECKANS_state = 4'd3;
-  localparam CHECKANSI_state = 4'd4;
-  localparam SCOREMINUS_state = 4'd5;
-  localparam SCOREPLUS_state = 4'd6;
-  localparam CHECKWIN_state = 4'd7;
-  localparam CHECKSCOREZERO_state = 4'd8;
-  localparam CHECKWINI_state = 4'd9;
-  localparam CHECKSCOREZEROI_state = 4'd10;
-  localparam WIN_state = 4'd11;
+  localparam STARTING_state = 4'd1;
+  localparam CHECKZERO_state = 4'd2;
+  localparam CHECKZEROI_state = 4'd3;
+  localparam CHECKANS_state = 4'd4;
+  localparam CHECKANSI_state = 4'd5;
+  localparam SCOREMINUS_state = 4'd6;
+  localparam SCOREPLUS_state = 4'd7;
+  localparam CHECKWIN_state = 4'd8;
+  localparam CHECKSCOREZERO_state = 4'd9;
+  localparam CHECKWINI_state = 4'd10;
+  localparam CHECKSCOREZEROI_state = 4'd11;
+  localparam WIN_state = 4'd12;
   
   reg [3:0] M_state_d, M_state_q = WAIT_state;
   localparam P1_player = 1'd0;
   localparam P2_player = 1'd1;
   
   reg M_player_d, M_player_q = P1_player;
-  wire [1-1:0] M_p1Interim_out;
-  register_10 p1Interim (
-    .clk(clk),
-    .rst(rst),
-    .en(p1IEn),
-    .data(p1IData),
-    .out(M_p1Interim_out)
-  );
-  wire [1-1:0] M_p2Interim_out;
-  register_10 p2Interim (
-    .clk(clk),
-    .rst(rst),
-    .en(p2IEn),
-    .data(p2IData),
-    .out(M_p2Interim_out)
-  );
+  reg M_p1Interim_d, M_p1Interim_q = 1'h0;
+  reg M_p2Interim_d, M_p2Interim_q = 1'h0;
   reg M_winSounded_d, M_winSounded_q = 1'h0;
   wire [16-1:0] M_cpu16_out;
   wire [16-1:0] M_cpu16_s1;
   wire [16-1:0] M_cpu16_s2;
-  cpu_12 cpu16 (
+  cpu_15 cpu16 (
     .clk(clk),
     .rst(rst),
     .instr(instruction),
-    .p1_button(p1TestInp),
-    .p2_button(p2TestInp),
+    .p1_button(p1input),
+    .p2_button(p2input),
     .out(M_cpu16_out),
     .s1(M_cpu16_s1),
     .s2(M_cpu16_s2)
@@ -167,7 +180,7 @@ module mojo_top_0 (
   wire [7-1:0] M_seg_seg;
   wire [4-1:0] M_seg_sel;
   reg [16-1:0] M_seg_values;
-  multi_seven_seg_13 seg (
+  multi_seven_seg_16 seg (
     .clk(clk),
     .rst(rst),
     .values(M_seg_values),
@@ -176,7 +189,7 @@ module mojo_top_0 (
   );
   wire [64-1:0] M_random_out;
   reg [1-1:0] M_random_next;
-  randomSet_14 random (
+  randomSet_17 random (
     .clk(clk),
     .rst(rst),
     .next(M_random_next),
@@ -186,7 +199,7 @@ module mojo_top_0 (
   wire [1-1:0] M_tx_busy;
   reg [8-1:0] M_tx_data;
   reg [1-1:0] M_tx_new_data;
-  uart_tx_15 tx (
+  uart_tx_18 tx (
     .clk(clk),
     .rst(rst),
     .block(1'h0),
@@ -198,14 +211,14 @@ module mojo_top_0 (
   
   wire [8-1:0] M_dig2to1P1_out;
   reg [8-1:0] M_dig2to1P1_num;
-  dig2to1_16 dig2to1P1 (
+  dig2to1_19 dig2to1P1 (
     .num(M_dig2to1P1_num),
     .out(M_dig2to1P1_out)
   );
   
   wire [8-1:0] M_dig2to1P2_out;
   reg [8-1:0] M_dig2to1P2_num;
-  dig2to1_16 dig2to1P2 (
+  dig2to1_19 dig2to1P2 (
     .num(M_dig2to1P2_num),
     .out(M_dig2to1P2_out)
   );
@@ -213,49 +226,73 @@ module mojo_top_0 (
   always @* begin
     M_state_d = M_state_q;
     M_player_d = M_player_q;
+    M_p1Interim_d = M_p1Interim_q;
+    M_p2Interim_d = M_p2Interim_q;
     M_winSounded_d = M_winSounded_q;
     
     M_reset_cond_in = ~rst_n;
     rst = M_reset_cond_out;
-    answers = 64'h2313132131213213;
-    p1ideal = {2'h0, answers[(M_cpu16_s1)*4+3-:4]};
-    p2ideal = {2'h0, answers[(M_cpu16_s2)*4+3-:4]};
+    p1ideal = M_random_out[(M_cpu16_s1)*4+3-:4];
+    p2ideal = M_random_out[(M_cpu16_s2)*4+3-:4];
+    p1LED = p1ideal;
+    p2LED = p2ideal;
     M_dig2to1P1_num = M_cpu16_s1;
     M_dig2to1P2_num = M_cpu16_s2;
     M_seg_values = {M_dig2to1P1_out, M_dig2to1P2_out};
     io_seg = ~M_seg_seg;
     io_sel = ~M_seg_sel;
-    M_left_cond_in = io_button[3+0-:1];
-    M_right_cond_in = io_button[4+0-:1];
-    M_up_cond_in = io_button[0+0-:1];
-    M_down_cond_in = io_button[2+0-:1];
-    M_center_cond_in = io_button[1+0-:1];
-    M_center_detect_in = M_center_cond_out;
-    p1TestInp = {2'h0, M_left_cond_out, M_down_cond_out};
-    p2TestInp = {2'h0, M_up_cond_out, M_right_cond_out};
-    io_led = 1'h0;
-    io_led[8+7-:8] = {M_random_out[(M_cpu16_s1)*4+3-:4], M_random_out[(M_cpu16_s2)*4+3-:4]};
-    io_led[4+3-:4] = answers[(M_cpu16_s1)*4+3-:4];
-    io_led[0+3-:4] = answers[(M_cpu16_s2)*4+3-:4];
+    M_p1c1_in = ~p1Raw[0+0-:1];
+    M_p1c2_in = ~p1Raw[1+0-:1];
+    M_p1c3_in = ~p1Raw[2+0-:1];
+    M_p1c4_in = ~p1Raw[3+0-:1];
+    p1input = {M_p1c4_out, M_p1c3_out, M_p1c2_out, M_p1c1_out};
+    M_p2c1_in = ~p2Raw[0+0-:1];
+    M_p2c2_in = ~p2Raw[1+0-:1];
+    M_p2c3_in = ~p2Raw[2+0-:1];
+    M_p2c4_in = ~p2Raw[3+0-:1];
+    p2input = {M_p2c4_out, M_p2c3_out, M_p2c2_out, M_p2c1_out};
+    M_startCond_in = ~start;
+    M_startDetect_in = M_startCond_out;
     dynamicRst1 = 1'h0;
     dynamicRst2 = 1'h0;
-    p1IEn = 1'h0;
-    p2IEn = 1'h0;
-    p1IData = 1'h0;
-    p2IData = 1'h0;
+    io_led = 1'h0;
     instruction = 17'h1ffff;
     M_random_next = 1'h0;
+    startCounterRst = 1'h1;
     M_tx_data = 1'h0;
     M_tx_new_data = 1'h0;
     avr_rx = M_tx_tx;
     
     case (M_state_q)
       WAIT_state: begin
+        p1LED = 4'hf;
+        p2LED = 4'hf;
+        io_led[0+3-:4] = p1input;
+        io_led[4+3-:4] = p2input;
         M_random_next = 1'h1;
-        io_led[0+23-:24] = 24'hffffff;
-        if (M_center_detect_out) begin
-          M_state_d = CHECKZERO_state;
+        if (M_startDetect_out) begin
+          M_state_d = STARTING_state;
         end
+      end
+      STARTING_state: begin
+        startCounterRst = 1'h0;
+        p1LED = 1'h0;
+        p2LED = 1'h0;
+        
+        case (M_startCounter_value)
+          1'h0: begin
+            M_seg_values = 16'h3ccc;
+          end
+          1'h1: begin
+            M_seg_values = 16'h32cc;
+          end
+          2'h2: begin
+            M_seg_values = 16'h321c;
+          end
+          2'h3: begin
+            M_state_d = CHECKZERO_state;
+          end
+        endcase
       end
       CHECKZERO_state: begin
         
@@ -274,13 +311,12 @@ module mojo_top_0 (
         case (M_player_q)
           P1_player: begin
             if (M_cpu16_out) begin
-              p1IEn = 1'h1;
-              p1IData = 1'h0;
+              M_p1Interim_d = 1'h0;
               dynamicRst1 = 1'h1;
               M_player_d = P2_player;
               M_state_d = CHECKZERO_state;
             end else begin
-              if (M_p1Interim_out) begin
+              if (M_p1Interim_q) begin
                 M_state_d = CHECKZERO_state;
                 M_player_d = P2_player;
               end else begin
@@ -290,13 +326,12 @@ module mojo_top_0 (
           end
           P2_player: begin
             if (M_cpu16_out) begin
-              p2IEn = 1'h1;
-              p2IData = 1'h0;
+              M_p2Interim_d = 1'h0;
               dynamicRst2 = 1'h1;
               M_player_d = P1_player;
               M_state_d = CHECKZERO_state;
             end else begin
-              if (M_p2Interim_out) begin
+              if (M_p2Interim_q) begin
                 M_state_d = CHECKZERO_state;
                 M_player_d = P1_player;
               end else begin
@@ -352,8 +387,7 @@ module mojo_top_0 (
         case (M_player_q)
           P1_player: begin
             instruction = 17'h05040;
-            p1IEn = 1'h1;
-            p1IData = 1'h1;
+            M_p1Interim_d = 1'h1;
             M_state_d = CHECKWIN_state;
             if (!M_tx_busy) begin
               M_tx_data = 7'h61;
@@ -362,8 +396,7 @@ module mojo_top_0 (
           end
           P2_player: begin
             instruction = 17'h0a040;
-            p2IEn = 1'h1;
-            p2IData = 1'h1;
+            M_p2Interim_d = 1'h1;
             M_state_d = CHECKWIN_state;
             if (!M_tx_busy) begin
               M_tx_data = 7'h62;
@@ -409,7 +442,8 @@ module mojo_top_0 (
         
         case (M_player_q)
           P1_player: begin
-            M_seg_values = 16'ha1bb;
+            p1LED = {3'h4{M_counter1_value}};
+            p2LED = 1'h0;
             if (!M_tx_busy & !M_winSounded_q) begin
               M_tx_data = 7'h65;
               M_tx_new_data = 1'h1;
@@ -417,7 +451,8 @@ module mojo_top_0 (
             end
           end
           P2_player: begin
-            M_seg_values = 16'ha2bb;
+            p2LED = {3'h4{M_counter1_value}};
+            p1LED = 1'h0;
             if (!M_tx_busy & !M_winSounded_q) begin
               M_tx_data = 7'h66;
               M_tx_new_data = 1'h1;
@@ -425,6 +460,9 @@ module mojo_top_0 (
             end
           end
         endcase
+        if (M_startDetect_out) begin
+          rst = 1'h1;
+        end
       end
       CHECKSCOREZERO_state: begin
         
@@ -465,8 +503,7 @@ module mojo_top_0 (
         case (M_player_q)
           P1_player: begin
             instruction = 17'h05041;
-            p1IEn = 1'h1;
-            p1IData = 1'h1;
+            M_p1Interim_d = 1'h1;
             M_state_d = CHECKZERO_state;
             M_player_d = P2_player;
             if (!M_tx_busy) begin
@@ -476,8 +513,7 @@ module mojo_top_0 (
           end
           P2_player: begin
             instruction = 17'h0a041;
-            p2IEn = 1'h1;
-            p2IData = 1'h1;
+            M_p2Interim_d = 1'h1;
             M_state_d = CHECKZERO_state;
             M_player_d = P1_player;
             if (!M_tx_busy) begin
@@ -488,17 +524,21 @@ module mojo_top_0 (
         endcase
       end
     endcase
-    led = {M_counter1_value, M_counter2_value, M_p1Interim_out, M_p2Interim_out};
+    led = 1'h0;
     spi_miso = 1'bz;
     spi_channel = 4'bzzzz;
   end
   
   always @(posedge clk) begin
     if (rst == 1'b1) begin
+      M_p1Interim_q <= 1'h0;
+      M_p2Interim_q <= 1'h0;
       M_winSounded_q <= 1'h0;
       M_state_q <= 1'h0;
       M_player_q <= 1'h0;
     end else begin
+      M_p1Interim_q <= M_p1Interim_d;
+      M_p2Interim_q <= M_p2Interim_d;
       M_winSounded_q <= M_winSounded_d;
       M_state_q <= M_state_d;
       M_player_q <= M_player_d;

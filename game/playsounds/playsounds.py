@@ -10,6 +10,7 @@ win = os.path.join(dirname, 'sfx_sounds_fanfare1.wav')
 ser = serial.Serial('/dev/ttyACM0')
 while(ser.isOpen):
     received = ser.read()
+    print(received)
     if(received == b'a' or received == b'b'):
         Popen(["aplay", plus])
     if(received == b'c' or received == b'd'):

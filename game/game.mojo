@@ -16,6 +16,7 @@
     <src>comparator.luc</src>
     <src>mux8.luc</src>
     <src>shifter.luc</src>
+    <ucf>board.ucf</ucf>
     <ucf lib="true">mojo.ucf</ucf>
     <ucf>io.ucf</ucf>
     <component>pipeline.luc</component>

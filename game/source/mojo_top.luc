@@ -13,8 +13,8 @@ module mojo_top (
     input avr_rx_busy,       // AVR RX buffer full
     output io_sel[4],
     output io_seg[8],
+    output io_led[24],
     
-    // TODO: Implement in UCF
     input p1Raw[4],
     input p2Raw[4],
     input start,
@@ -31,10 +31,7 @@ module mojo_top (
   sig p2ideal[6];
   sig dynamicRst1; // Dynamic reset signals for player score deduction counters
   sig dynamicRst2;
-  sig p1IEn; // Enable and data signals for registers that hold the player state (interim or not)
-  sig p2IEn;
-  sig p1IData;
-  sig p2IData;
+  sig startCounterRst;
   
   .clk(clk) {
     // The reset conditioner is used to synchronize the reset signal to the FPGA
@@ -60,13 +57,17 @@ module mojo_top (
     counter counter1(#SIZE(1), #DIV(21), .rst(dynamicRst1));
     counter counter2(#SIZE(1), #DIV(21), .rst(dynamicRst2));
     
+    // counter to count down to game start
+    counter startCounter(#SIZE(2), #DIV(26), .rst(startCounterRst));
+    
     .rst(rst){
       // Main state machine
-      fsm state = {WAIT, CHECKZERO, CHECKZEROI, CHECKANS, CHECKANSI, SCOREMINUS, SCOREPLUS, CHECKWIN, CHECKSCOREZERO, CHECKWINI, CHECKSCOREZEROI, WIN};
+      fsm state = {WAIT, STARTING, CHECKZERO, CHECKZEROI, CHECKANS, CHECKANSI, SCOREMINUS, SCOREPLUS, CHECKWIN, CHECKSCOREZERO, CHECKWINI, CHECKSCOREZEROI, WIN};
       fsm player = {P1, P2}; // State to check who's turn it is
       
-      register p1Interim(#WIDTH(1), .en(p1IEn), .data(p1IData)); // booleans to check whether players have released their buttons after a score addition/deduction
-      register p2Interim(#WIDTH(1), .en(p2IEn), .data(p2IData));
+      dff p1Interim; // booleans to check whether players have released their buttons after a score addition/deduction
+      dff p2Interim;
+      
       dff winSounded; // boolean to check whether the win signal has been sent over the serial port
       
       cpu cpu16(.instr(instruction), .p1_button(p1input), .p2_button(p2input)); // CPU for computation
@@ -94,7 +95,7 @@ module mojo_top (
     p1ideal = random.out[cpu16.s1];
     p2ideal = random.out[cpu16.s2];
     
-    // TODO: figure out why this is throwing a warning. Should be same dimensions no?
+    // Display the current buttons to be pressed
     p1LED = p1ideal;
     p2LED = p2ideal;
     
@@ -125,15 +126,14 @@ module mojo_top (
     dynamicRst1 = 0;
     dynamicRst2 = 0;
     
-    // Signals for the registers to hold the player state (whether they are in interim or not)
-    p1IEn = 0;
-    p2IEn = 0;
-    p1IData = 0;
-    p2IData = 0;
+    // Turn off Mojo LEDs by default
+    io_led = 0;
     
     instruction = 17x{b1}; // Default instruction to idle the CPU
     
     random.next = 0; // By default do not generate new numbers
+    
+    startCounterRst = 1; // By default, do not let the start counter run
     
     tx.data = 0; // by default do not send anything over the serial port
     tx.new_data = 0;
@@ -142,9 +142,36 @@ module mojo_top (
     // Main state machine
     case(state.q){
       state.WAIT:
+        
+        p1LED = 4b1111;
+        p2LED = 4b1111;
+        
+        // TEST button connection
+        io_led[3:0] = p1input;
+        io_led[7:4] = p2input;
+        
         random.next = 1; // Generate new numbers in the WAIT State continuously
         if(startDetect.out){
-          state.d = state.CHECKZERO;
+          state.d = state.STARTING;
+        }
+      
+      state.STARTING:
+        startCounterRst = 0; // Run the start counter
+        
+        p1LED = 0; // Don't show anything
+        p2LED = 0;
+        case(startCounter.value){
+          0:
+            seg.values = {4d3, 4d12, 4d12, 4d12};
+          
+          1:
+            seg.values = {4d3, 4d2, 4d12, 4d12};
+          
+          2:
+            seg.values = {4d3, 4d2, 4d1, 4d12};
+          
+          3:
+            state.d = state.CHECKZERO;
         }
       
       state.CHECKZERO:
@@ -160,13 +187,12 @@ module mojo_top (
         case(player.q){
           player.P1:
             if(cpu16.out){
-              p1IEn = 1;
-              p1IData = 0; // take player out of interim
+              p1Interim.d = 0; // take player out of interim
               dynamicRst1 = 1; // reset p1 counter
               player.d = player.P2;
               state.d = state.CHECKZERO;
             } else {
-              if(p1Interim.out){ // If in interim, do nothing and move on to other player.
+              if(p1Interim.q){ // If in interim, do nothing and move on to other player.
                 state.d = state.CHECKZERO;
                 player.d = player.P2;
               } else {
@@ -176,13 +202,12 @@ module mojo_top (
           
           player.P2:
             if(cpu16.out){
-              p2IEn = 1;
-              p2IData = 0;
+              p2Interim.d = 0;
               dynamicRst2 = 1;
               player.d = player.P1;
               state.d = state.CHECKZERO;
             } else {
-              if(p2Interim.out){
+              if(p2Interim.q){
                 state.d = state.CHECKZERO;
                 player.d = player.P1;
               } else {
@@ -231,8 +256,7 @@ module mojo_top (
         case(player.q){
           player.P1:
             instruction = c{b001, b01, b000001, 6x{b0}};
-            p1IEn = 1;
-            p1IData = 1; // put player into interim after successful addition of score.
+            p1Interim.d = 1; // put player into interim after successful addition of score.
             state.d = state.CHECKWIN;
             
             if(!tx.busy){ // Send if not busy
@@ -242,8 +266,7 @@ module mojo_top (
           
           player.P2:
             instruction = c{b010, b10, b000001, 6x{b0}};
-            p2IEn = 1;
-            p2IData = 1;
+            p2Interim.d = 1;
             state.d = state.CHECKWIN;
             
             if(!tx.busy){
@@ -284,7 +307,9 @@ module mojo_top (
       state.WIN:
         case(player.q){
           player.P1:
-            seg.values = {4d10,4d1,4d11,4d11}; // Hardcoded P1^^
+            p1LED = 4x{counter1.value};
+            p2LED = 0;
+            //seg.values = {4d10,4d1,4d11,4d11}; // Hardcoded P1^^
             if(!tx.busy & !winSounded.q){ // Only sent if it has not been sent before. Prevent continuous sending.
               tx.data = "e";
               tx.new_data = 1;
@@ -292,7 +317,9 @@ module mojo_top (
             }
           
           player.P2:
-            seg.values = {4d10,4d2,4d11,4d11}; // Hardcoded P2^^
+            p2LED = 4x{counter1.value};
+            p1LED = 0;
+            //seg.values = {4d10,4d2,4d11,4d11}; // Hardcoded P2^^
             if(!tx.busy & !winSounded.q){
               tx.data = "f";
               tx.new_data = 1;
@@ -300,7 +327,6 @@ module mojo_top (
             }
         }
         
-        // TODO: check if this works. Dynamically reset game if start button is pressed in the WIN state.
         if(startDetect.out){
           rst = 1;
         }
@@ -339,8 +365,7 @@ module mojo_top (
         case(player.q){
           player.P1:
             instruction = c{b001, b01, b000001, b000001};
-            p1IEn = 1;
-            p1IData = 1; // put player into interim after deduction of score.
+            p1Interim.d = 1; // put player into interim after deduction of score.
             state.d = state.CHECKZERO;
             player.d = player.P2;
             
@@ -351,8 +376,7 @@ module mojo_top (
           
           player.P2:
             instruction = c{b010, b10, b000001, b000001};
-            p2IEn = 1;
-            p2IData = 1;
+            p2Interim.d = 1;
             state.d = state.CHECKZERO;
             player.d = player.P1;
             

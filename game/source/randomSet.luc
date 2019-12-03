@@ -7,7 +7,7 @@ module randomSet (
   
   .clk(clk){
     .next(next){
-      .rst(rst){ // Never need to reset so hardcode to 0
+      .rst(rst){
         pn_gen random1(.seed(32b0)); // Arbitrarily choose seeds
         pn_gen random2(.seed(32b1));
       }

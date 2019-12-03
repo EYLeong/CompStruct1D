@@ -17,6 +17,7 @@ module seven_seg (
       9: segs = 7b1100111;
       10: segs = 7b1110011; // This is actually a P on the display
       11: segs = 7b0100011; // This is actually a ^ on the display
+      12: segs = 7b0000000;
       default: segs = 7b0000000;
     }
   }
