@@ -13,7 +13,6 @@ module mojo_top (
     input avr_rx_busy,       // AVR RX buffer full
     output io_sel[4],
     output io_seg[8],
-    output io_led[24],
     
     input p1Raw[4],
     input p2Raw[4],
@@ -29,7 +28,7 @@ module mojo_top (
   sig p2input[4];
   sig p1ideal[6]; // current sequence that each player is supposed to press
   sig p2ideal[6];
-  sig dynamicRst1; // Dynamic reset signals for player score deduction counters
+  sig dynamicRst1; // Dynamic reset signals
   sig dynamicRst2;
   sig startCounterRst;
   
@@ -38,20 +37,19 @@ module mojo_top (
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
     
-    // button conditioning
-    button_conditioner p1c1;
-    button_conditioner p1c2;
-    button_conditioner p1c3;
-    button_conditioner p1c4;
+    //Button Debouncing
+    debounce p1d1;
+    debounce p1d2;
+    debounce p1d3;
+    debounce p1d4;
     
-    button_conditioner p2c1;
-    button_conditioner p2c2;
-    button_conditioner p2c3;
-    button_conditioner p2c4;
+    debounce p2d1;
+    debounce p2d2;
+    debounce p2d3;
+    debounce p2d4;
     
     button_conditioner startCond;
-    edge_detector startDetect;
-    
+    edge_detector startDetect(#FALL(0));
     
     // counters to determine when it is time to deduct score
     counter counter1(#SIZE(1), #DIV(21), .rst(dynamicRst1));
@@ -61,8 +59,10 @@ module mojo_top (
     counter startCounter(#SIZE(2), #DIV(26), .rst(startCounterRst));
     
     .rst(rst){
+      
       // Main state machine
       fsm state = {WAIT, STARTING, CHECKZERO, CHECKZEROI, CHECKANS, CHECKANSI, SCOREMINUS, SCOREPLUS, CHECKWIN, CHECKSCOREZERO, CHECKWINI, CHECKSCOREZEROI, WIN};
+      
       fsm player = {P1, P2}; // State to check who's turn it is
       
       dff p1Interim; // booleans to check whether players have released their buttons after a score addition/deduction
@@ -87,6 +87,7 @@ module mojo_top (
   dig2to1 dig2to1P1;
   dig2to1 dig2to1P2;
   
+  
   always {
     reset_cond.in = ~rst_n; // input raw inverted reset signal
     rst = reset_cond.out;   // conditioned reset
@@ -106,18 +107,18 @@ module mojo_top (
     io_seg = ~seg.seg;
     io_sel = ~seg.sel;
     
-    // Button conditioning
-    p1c1.in = ~p1Raw[0]; // Invert because buttons are connected to ground and using pullup resistors.
-    p1c2.in = ~p1Raw[1];
-    p1c3.in = ~p1Raw[2];
-    p1c4.in = ~p1Raw[3];
-    p1input = c{p1c4.out, p1c3.out, p1c2.out, p1c1.out};
+    // Button debouncing
+    p1d1.in = ~p1Raw[0]; // Invert because buttons are connected to ground and using pullup resistors.
+    p1d2.in = ~p1Raw[1];
+    p1d3.in = ~p1Raw[2];
+    p1d4.in = ~p1Raw[3];
+    p1input = c{p1d4.out, p1d3.out, p1d2.out, p1d1.out};
     
-    p2c1.in = ~p2Raw[0];
-    p2c2.in = ~p2Raw[1];
-    p2c3.in = ~p2Raw[2];
-    p2c4.in = ~p2Raw[3];
-    p2input = c{p2c4.out, p2c3.out, p2c2.out, p2c1.out};
+    p2d1.in = ~p2Raw[0];
+    p2d2.in = ~p2Raw[1];
+    p2d3.in = ~p2Raw[2];
+    p2d4.in = ~p2Raw[3];
+    p2input = c{p2d4.out, p2d3.out, p2d2.out, p2d1.out};
     
     startCond.in = ~start;
     startDetect.in = startCond.out;
@@ -126,8 +127,7 @@ module mojo_top (
     dynamicRst1 = 0;
     dynamicRst2 = 0;
     
-    // Turn off Mojo LEDs by default
-    io_led = 0;
+    led = 0;                // Turn off by default
     
     instruction = 17x{b1}; // Default instruction to idle the CPU
     
@@ -147,10 +147,11 @@ module mojo_top (
         p2LED = 4b1111;
         
         // TEST button connection
-        io_led[3:0] = p1input;
-        io_led[7:4] = p2input;
+        led[3:0] = p1input;
+        led[7:4] = p2input;
         
         random.next = 1; // Generate new numbers in the WAIT State continuously
+        
         if(startDetect.out){
           state.d = state.STARTING;
         }
@@ -328,7 +329,7 @@ module mojo_top (
         }
         
         if(startDetect.out){
-          rst = 1;
+          rst = 1; // Reset components
         }
       
       state.CHECKSCOREZERO:
@@ -387,7 +388,6 @@ module mojo_top (
         }
     }
     
-    led = 0;                // not using LEDs on Mojo
     spi_miso = bz;          // not using SPI
     spi_channel = bzzzz;    // not using flags
   }

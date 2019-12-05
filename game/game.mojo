@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="game" board="Mojo V3" language="Lucid">
   <files>
+    <src>debounce.luc</src>
     <src top="true">mojo_top.luc</src>
     <src>decoder2.luc</src>
     <src>randomSet.luc</src>

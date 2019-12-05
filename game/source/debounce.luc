@@ -1,0 +1,33 @@
+/* Module to hold inputs for a specified period of time to debounce */
+
+module debounce (
+    input clk,  // clock
+    input in,
+    output out
+  ) {
+  
+  sig dynamicRst;
+  
+  counter hold(#DIV(16), .clk(clk), .rst(dynamicRst)); // Counter to hold the button press
+  dff state(.clk(clk)); // Button pressed state
+  
+  always {
+    
+    dynamicRst = 0; // by default, let counter run
+    
+    if(in){
+      dynamicRst = 1; // Reset counter whenever there is input
+      state.d = 1; // Set to pressed
+    } else {
+      if(hold.value){ // Set to not pressed when counter is up
+        state.d = 0;
+      }
+    }
+    
+    if(state.q){
+      out = 1;
+    } else {
+      out = 0;
+    }
+  }
+}

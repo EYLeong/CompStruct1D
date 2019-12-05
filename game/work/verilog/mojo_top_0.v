@@ -19,7 +19,6 @@ module mojo_top_0 (
     input avr_rx_busy,
     output reg [3:0] io_sel,
     output reg [7:0] io_seg,
-    output reg [23:0] io_led,
     input [3:0] p1Raw,
     input [3:0] p2Raw,
     input start,
@@ -54,65 +53,65 @@ module mojo_top_0 (
     .in(M_reset_cond_in),
     .out(M_reset_cond_out)
   );
-  wire [1-1:0] M_p1c1_out;
-  reg [1-1:0] M_p1c1_in;
-  button_conditioner_2 p1c1 (
+  wire [1-1:0] M_p1d1_out;
+  reg [1-1:0] M_p1d1_in;
+  debounce_2 p1d1 (
     .clk(clk),
-    .in(M_p1c1_in),
-    .out(M_p1c1_out)
+    .in(M_p1d1_in),
+    .out(M_p1d1_out)
   );
-  wire [1-1:0] M_p1c2_out;
-  reg [1-1:0] M_p1c2_in;
-  button_conditioner_2 p1c2 (
+  wire [1-1:0] M_p1d2_out;
+  reg [1-1:0] M_p1d2_in;
+  debounce_2 p1d2 (
     .clk(clk),
-    .in(M_p1c2_in),
-    .out(M_p1c2_out)
+    .in(M_p1d2_in),
+    .out(M_p1d2_out)
   );
-  wire [1-1:0] M_p1c3_out;
-  reg [1-1:0] M_p1c3_in;
-  button_conditioner_2 p1c3 (
+  wire [1-1:0] M_p1d3_out;
+  reg [1-1:0] M_p1d3_in;
+  debounce_2 p1d3 (
     .clk(clk),
-    .in(M_p1c3_in),
-    .out(M_p1c3_out)
+    .in(M_p1d3_in),
+    .out(M_p1d3_out)
   );
-  wire [1-1:0] M_p1c4_out;
-  reg [1-1:0] M_p1c4_in;
-  button_conditioner_2 p1c4 (
+  wire [1-1:0] M_p1d4_out;
+  reg [1-1:0] M_p1d4_in;
+  debounce_2 p1d4 (
     .clk(clk),
-    .in(M_p1c4_in),
-    .out(M_p1c4_out)
+    .in(M_p1d4_in),
+    .out(M_p1d4_out)
   );
-  wire [1-1:0] M_p2c1_out;
-  reg [1-1:0] M_p2c1_in;
-  button_conditioner_2 p2c1 (
+  wire [1-1:0] M_p2d1_out;
+  reg [1-1:0] M_p2d1_in;
+  debounce_2 p2d1 (
     .clk(clk),
-    .in(M_p2c1_in),
-    .out(M_p2c1_out)
+    .in(M_p2d1_in),
+    .out(M_p2d1_out)
   );
-  wire [1-1:0] M_p2c2_out;
-  reg [1-1:0] M_p2c2_in;
-  button_conditioner_2 p2c2 (
+  wire [1-1:0] M_p2d2_out;
+  reg [1-1:0] M_p2d2_in;
+  debounce_2 p2d2 (
     .clk(clk),
-    .in(M_p2c2_in),
-    .out(M_p2c2_out)
+    .in(M_p2d2_in),
+    .out(M_p2d2_out)
   );
-  wire [1-1:0] M_p2c3_out;
-  reg [1-1:0] M_p2c3_in;
-  button_conditioner_2 p2c3 (
+  wire [1-1:0] M_p2d3_out;
+  reg [1-1:0] M_p2d3_in;
+  debounce_2 p2d3 (
     .clk(clk),
-    .in(M_p2c3_in),
-    .out(M_p2c3_out)
+    .in(M_p2d3_in),
+    .out(M_p2d3_out)
   );
-  wire [1-1:0] M_p2c4_out;
-  reg [1-1:0] M_p2c4_in;
-  button_conditioner_2 p2c4 (
+  wire [1-1:0] M_p2d4_out;
+  reg [1-1:0] M_p2d4_in;
+  debounce_2 p2d4 (
     .clk(clk),
-    .in(M_p2c4_in),
-    .out(M_p2c4_out)
+    .in(M_p2d4_in),
+    .out(M_p2d4_out)
   );
   wire [1-1:0] M_startCond_out;
   reg [1-1:0] M_startCond_in;
-  button_conditioner_2 startCond (
+  button_conditioner_10 startCond (
     .clk(clk),
     .in(M_startCond_in),
     .out(M_startCond_out)
@@ -241,21 +240,21 @@ module mojo_top_0 (
     M_seg_values = {M_dig2to1P1_out, M_dig2to1P2_out};
     io_seg = ~M_seg_seg;
     io_sel = ~M_seg_sel;
-    M_p1c1_in = ~p1Raw[0+0-:1];
-    M_p1c2_in = ~p1Raw[1+0-:1];
-    M_p1c3_in = ~p1Raw[2+0-:1];
-    M_p1c4_in = ~p1Raw[3+0-:1];
-    p1input = {M_p1c4_out, M_p1c3_out, M_p1c2_out, M_p1c1_out};
-    M_p2c1_in = ~p2Raw[0+0-:1];
-    M_p2c2_in = ~p2Raw[1+0-:1];
-    M_p2c3_in = ~p2Raw[2+0-:1];
-    M_p2c4_in = ~p2Raw[3+0-:1];
-    p2input = {M_p2c4_out, M_p2c3_out, M_p2c2_out, M_p2c1_out};
+    M_p1d1_in = ~p1Raw[0+0-:1];
+    M_p1d2_in = ~p1Raw[1+0-:1];
+    M_p1d3_in = ~p1Raw[2+0-:1];
+    M_p1d4_in = ~p1Raw[3+0-:1];
+    p1input = {M_p1d4_out, M_p1d3_out, M_p1d2_out, M_p1d1_out};
+    M_p2d1_in = ~p2Raw[0+0-:1];
+    M_p2d2_in = ~p2Raw[1+0-:1];
+    M_p2d3_in = ~p2Raw[2+0-:1];
+    M_p2d4_in = ~p2Raw[3+0-:1];
+    p2input = {M_p2d4_out, M_p2d3_out, M_p2d2_out, M_p2d1_out};
     M_startCond_in = ~start;
     M_startDetect_in = M_startCond_out;
     dynamicRst1 = 1'h0;
     dynamicRst2 = 1'h0;
-    io_led = 1'h0;
+    led = 1'h0;
     instruction = 17'h1ffff;
     M_random_next = 1'h0;
     startCounterRst = 1'h1;
@@ -267,8 +266,8 @@ module mojo_top_0 (
       WAIT_state: begin
         p1LED = 4'hf;
         p2LED = 4'hf;
-        io_led[0+3-:4] = p1input;
-        io_led[4+3-:4] = p2input;
+        led[0+3-:4] = p1input;
+        led[4+3-:4] = p2input;
         M_random_next = 1'h1;
         if (M_startDetect_out) begin
           M_state_d = STARTING_state;
@@ -524,7 +523,6 @@ module mojo_top_0 (
         endcase
       end
     endcase
-    led = 1'h0;
     spi_miso = 1'bz;
     spi_channel = 4'bzzzz;
   end
